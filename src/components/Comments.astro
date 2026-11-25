@@ -1,0 +1,214 @@
+---
+import type { ThemeConfig } from "../config/types";
+import { t } from "../lib/i18n";
+import { renderEmotionKeyboard } from "../lib/comments/emotions.mjs";
+
+interface Props {
+  config: ThemeConfig;
+  wpId?: number;
+  bakedCommentsHtml?: string;
+}
+
+const { config, wpId, bakedCommentsHtml = "" } = Astro.props;
+const provider = config.comments.provider;
+const lang = config.site.language;
+const isZh = lang.toLowerCase().startsWith("zh");
+const giscus = config.comments.giscus;
+const waline = config.comments.waline;
+const twikoo = config.comments.twikoo;
+const artalk = config.comments.artalk;
+const hasBaked = Boolean(bakedCommentsHtml && bakedCommentsHtml.trim());
+---
+<section id="comments" class:list={["comments-area card shadow-sm border-0", { "comment-avatar-vertical-center": config.comments.avatarVcenter }]}>
+  <div class="card-body">
+    {hasBaked && (
+      <>
+        <h2 class="comments-title">
+          <i class="fa fa-comments"></i>
+          {t(lang, "comments")}
+        </h2>
+        <Fragment set:html={bakedCommentsHtml} />
+      </>
+    )}
+    {provider === "wordpress" && wpId && (
+      <div id="argon-comment-list" data-post-id={wpId}></div>
+    )}
+    {provider === "giscus" && giscus.repo && <div class="giscus"></div>}
+    {provider === "waline" && waline.serverURL && <div id="waline"></div>}
+    {provider === "twikoo" && twikoo.envId && <div id="tcomment"></div>}
+    {provider === "artalk" && artalk.server && <div id="artalk"></div>}
+    {!hasBaked && provider === "none" && <span class="text-muted">{t(lang, "localCommentHint")}</span>}
+    {!hasBaked && provider === "wordpress" && !wpId && (
+      <span class="text-muted">{isZh ? "评论暂不可用。" : "Comments are unavailable."}</span>
+    )}
+  </div>
+</section>
+
+{provider === "wordpress" && wpId && (
+  <div id="post_comment" class="card shadow-sm border-0">
+    <div class="card-body">
+      <h2 class="post-comment-title">
+        <i class="fa fa-commenting"></i>
+        <span>{isZh ? "发送评论" : "Post a Comment"}</span>
+      </h2>
+      <form id="argon-comment-form" data-endpoint="/api/comments" data-post-id={wpId}>
+        <div class="row">
+          <div class="col-md-12">
+            <textarea id="post_comment_content" class="form-control form-control-alternative" name="content" required placeholder={t(lang, "commentBody")} style="height: 80px;"></textarea>
+          </div>
+        </div>
+        {!config.comments.hideAuthorInputs && (
+          <div class="row" style="margin-bottom: -10px;">
+            <div class="col-md-4">
+              <div class="form-group">
+                <div class="input-group input-group-alternative mb-4">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text"><i class="fa fa-user-circle"></i></span>
+                  </div>
+                  <input id="post_comment_name" class="form-control" name="author" type="text" required placeholder={t(lang, "nickname")} />
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <div class="input-group input-group-alternative mb-4">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text"><i class="fa fa-envelope"></i></span>
+                  </div>
+                  <input id="post_comment_email" class="form-control" name="email" type="email" required placeholder={t(lang, "email")} />
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <div class="input-group input-group-alternative mb-4 post-comment-link-container">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text"><i class="fa fa-link"></i></span>
+                  </div>
+                  <input id="post_comment_link" class="form-control" name="url" type="text" placeholder={t(lang, "website")} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        {config.comments.captcha && (
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <div class="input-group input-group-alternative mb-3 comment-captcha">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text">
+                      <i class="fa fa-key"></i>
+                      <span id="argon-captcha-question" class="ml-1"></span>
+                    </span>
+                  </div>
+                  <input id="post_comment_captcha" class="form-control" name="captchaAnswer" inputmode="numeric" required placeholder="验证码" />
+                  <input type="hidden" name="captchaToken" />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        <div class="row" style="margin-top: 5px; margin-bottom: 10px;">
+          <div class="col-md-12">
+            {config.comments.allowMarkdown && (
+              <div class="custom-control custom-checkbox comment-post-checkbox comment-post-use-markdown">
+                <input class="custom-control-input" id="comment_post_use_markdown" type="checkbox" name="useMarkdown" />
+                <label class="custom-control-label" for="comment_post_use_markdown">Markdown</label>
+              </div>
+            )}
+            {config.comments.allowPrivateMode && (
+              <div class="custom-control custom-checkbox comment-post-checkbox comment-post-privatemode" tooltip="评论仅发送者和博主可见">
+                <input class="custom-control-input" id="comment_post_privatemode" type="checkbox" name="privateMode" />
+                <label class="custom-control-label" for="comment_post_privatemode">悄悄话</label>
+              </div>
+            )}
+            {config.comments.allowMailNotice && (
+              <div class="custom-control custom-checkbox comment-post-checkbox comment-post-mailnotice" tooltip="有回复时邮件通知我">
+                <input class="custom-control-input" id="comment_post_mailnotice" type="checkbox" name="mailNotice" checked={config.comments.mailNoticeChecked} />
+                <label class="custom-control-label" for="comment_post_mailnotice">邮件提醒</label>
+              </div>
+            )}
+            <button id="post_comment_send" class="btn btn-icon btn-primary comment-btn pull-right mr-0" type="submit">
+              <span class="btn-inner--icon"><i class="fa fa-send"></i></span>
+              <span class="btn-inner--text" style="margin-right: 0;">{t(lang, "submit")}</span>
+            </button>
+            {config.comments.emotionKeyboard && (
+              <>
+                <button id="comment_emotion_btn" class="btn btn-icon btn-primary pull-right" type="button" title="表情">
+                  <i class="fa fa-smile-o" aria-hidden="true"></i>
+                </button>
+                <Fragment set:html={renderEmotionKeyboard()} />
+              </>
+            )}
+          </div>
+        </div>
+        <p id="argon-comment-status" class="mt-2 mb-0"></p>
+      </form>
+    </div>
+  </div>
+)}
+
+{hasBaked && provider === "none" && (
+  <div id="post_comment" class="card shadow-sm border-0">
+    <div class="card-body">
+      <span class="text-muted">{t(lang, "localCommentHint")}</span>
+    </div>
+  </div>
+)}
+
+{hasBaked && provider === "wordpress" && !wpId && (
+  <div id="post_comment" class="card shadow-sm border-0">
+    <div class="card-body">
+      <span class="text-muted">{isZh ? "评论暂不可用。" : "Comments are unavailable."}</span>
+    </div>
+  </div>
+)}
+
+{provider === "giscus" && giscus.repo && (
+  <script is:inline define:vars={{ giscus }}>
+    const s = document.createElement("script");
+    s.src = "https://giscus.app/client.js";
+    s.async = true;
+    s.crossOrigin = "anonymous";
+    s.setAttribute("data-repo", giscus.repo);
+    s.setAttribute("data-repo-id", giscus.repoId);
+    s.setAttribute("data-category", giscus.category);
+    s.setAttribute("data-category-id", giscus.categoryId);
+    s.setAttribute("data-mapping", giscus.mapping || "pathname");
+    s.setAttribute("data-lang", giscus.lang || "zh-CN");
+    (document.querySelector("#comments .card-body") || document.getElementById("comments"))?.appendChild(s);
+  </script>
+)}
+{provider === "waline" && waline.serverURL && (
+  <script is:inline define:vars={{ waline }}>
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "https://unpkg.com/@waline/client@3/dist/waline.css";
+    document.head.appendChild(link);
+    const s = document.createElement("script");
+    s.src = "https://unpkg.com/@waline/client@3/dist/waline.js";
+    s.onload = () => window.Waline && window.Waline.init({ el: "#waline", serverURL: waline.serverURL, lang: waline.lang });
+    document.body.appendChild(s);
+  </script>
+)}
+{provider === "twikoo" && twikoo.envId && (
+  <script is:inline define:vars={{ twikoo }}>
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/twikoo@1/dist/twikoo.min.js";
+    s.onload = () => window.twikoo && window.twikoo.init({ el: "#tcomment", envId: twikoo.envId, region: twikoo.region || undefined });
+    document.body.appendChild(s);
+  </script>
+)}
+{provider === "artalk" && artalk.server && (
+  <script is:inline define:vars={{ artalk }}>
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "https://cdn.jsdelivr.net/npm/artalk/dist/Artalk.css";
+    document.head.appendChild(link);
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/artalk/dist/Artalk.js";
+    s.onload = () => window.Artalk && window.Artalk.init({ el: "#artalk", pageKey: location.pathname, server: artalk.server, site: artalk.site });
+    document.body.appendChild(s);
+  </script>
+)}

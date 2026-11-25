@@ -1,0 +1,36 @@
+name: Deploy Argon
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+  repository_dispatch:
+    types: [argon-config]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: corepack enable && corepack prepare pnpm@10 --activate
+      - run: pnpm install --frozen-lockfile || pnpm install
+      - name: Build static site
+        env:
+          ARGON_SOURCE: ${{ vars.ARGON_SOURCE }}
+          WP_URL: ${{ secrets.WP_URL }}
+          WP_USER: ${{ secrets.WP_USER }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+        run: pnpm build
+      - name: Run unit and contract tests
+        run: pnpm test
+      - name: Fail if the static site calls WordPress
+        env:
+          WP_URL: ${{ secrets.WP_URL }}
+        run: pnpm check:no-cms
+      - uses: actions/upload-artifact@v4
+        with:
+          name: argon-dist
+          path: dist

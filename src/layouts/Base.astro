@@ -1,0 +1,152 @@
+---
+import { loadThemeConfig } from "../config/load";
+import { toClientConfig } from "../config/public";
+import { themeColorStyle } from "../lib/color";
+import { htmlClass } from "../lib/html-class";
+import { pageBackgroundCss } from "../lib/appearance.mjs";
+import { googleFontHref } from "../lib/fonts.mjs";
+import { mathScriptUrl } from "../lib/outdated.mjs";
+import { ClientRouter } from "astro:transitions";
+import Header from "../components/Header.astro";
+import Banner from "../components/Banner.astro";
+import Sidebar from "../components/Sidebar.astro";
+import Footer from "../components/Footer.astro";
+import Fab from "../components/Fab.astro";
+import "../styles/bridge.css";
+import "../styles/blocks.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  home?: boolean;
+  catalog?: boolean;
+  markdownUrl?: string;
+  jsonLd?: Record<string, unknown>;
+}
+
+const { title, description, image, home = false, catalog = false, markdownUrl, jsonLd } = Astro.props;
+const config = loadThemeConfig();
+const clientConfig = toClientConfig(config);
+const pageTitle = title ? title + " - " + config.site.title : config.site.title;
+const pageDescription = description || config.site.description;
+const classes = htmlClass(config, home ? ["is-home"] : []);
+const colorStyle = themeColorStyle(config.appearance.color, config.appearance.cardRadius);
+const backgroundCss = pageBackgroundCss(config.background);
+const fontHref = googleFontHref(config.appearance.disableGoogleFont);
+const mathHref = config.motion.math === "mathjax2"
+  ? mathScriptUrl(config.motion.mathjaxV2Cdn || config.motion.mathjaxCdn)
+  : config.motion.math === "mathjax3"
+    ? mathScriptUrl(config.motion.mathjaxCdn)
+    : "";
+const katexCssHref = mathScriptUrl(config.motion.katexCdn) || "/argon/vendor/katex/katex.min.css";
+const codeTheme = (config.motion.codeTheme || "vs2015").replace(/[^a-z0-9._/-]/gi, "");
+const bannerCss = config.banner.backgroundUrl
+  ? "section.banner{background-image:url(" + config.banner.backgroundUrl + ") !important}"
+  : "";
+---
+
+<!doctype html>
+<html lang={config.site.language} class={classes} data-darkmode={config.appearance.darkmode}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content={config.appearance.mobileScale ? "width=device-width, initial-scale=1, maximum-scale=5" : "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"} />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
+    {config.site.keywords && <meta name="keywords" content={config.site.keywords} />}
+    <meta property="og:site_name" content={config.site.title} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDescription} />
+    {image && <meta property="og:image" content={image} />}
+    <meta name="theme-color" content={config.appearance.color} />
+    <link rel="icon" type="image/svg+xml" href="/argon/toolbar-icon.svg" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    {config.motion.pjax && <ClientRouter />}
+    <link rel="preload" href="/argon/assets/vendor/font-awesome/fonts/fontawesome-webfont.woff2?v=4.7.0" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/argon/assets/argon-core.min.css" />
+    {!home && config.motion.codeHighlight && (
+      <>
+        <link rel="preload" as="style" href={"/argon/vendor/highlight/styles/" + codeTheme + ".css"} onload="this.onload=null;this.rel='stylesheet'" />
+        <noscript><link rel="stylesheet" href={"/argon/vendor/highlight/styles/" + codeTheme + ".css"} /></noscript>
+      </>
+    )}
+    {config.motion.math === "katex" && <link rel="stylesheet" href={katexCssHref} />}
+    <style id="themecolor_css" set:html={colorStyle}></style>
+    {backgroundCss && <style set:html={backgroundCss}></style>}
+    {bannerCss && <style set:html={bannerCss}></style>}
+    <script is:inline>
+      (function () {
+        var root = document.documentElement;
+        root.classList.remove("no-js");
+        var storedDark = sessionStorage.getItem("Argon_Enable_Dark_Mode");
+        var mode = root.getAttribute("data-darkmode") || "system";
+        if (
+          storedDark === "true" ||
+          mode === "always" ||
+          mode === "alwayson" ||
+          (storedDark == null && mode === "system" && matchMedia("(prefers-color-scheme: dark)").matches) ||
+          (storedDark == null && mode === "time" && (new Date().getHours() < 7 || new Date().getHours() >= 22))
+        ) {
+          root.classList.add("darkmode");
+        }
+        if (localStorage.getItem("Argon_Enable_Amoled_Dark_Mode") === "true") {
+          root.classList.add("amoled-dark");
+        }
+        var savedFont = localStorage.getItem("Argon_Font");
+        if (savedFont === "serif") root.classList.add("use-serif");
+        else if (savedFont === "sans") root.classList.remove("use-serif");
+        var savedShadow = localStorage.getItem("Argon_Shadow");
+        if (savedShadow === "big") {
+          root.classList.remove("use-small-shadow");
+          root.classList.add("use-big-shadow");
+        } else if (savedShadow === "small") {
+          root.classList.remove("use-big-shadow");
+          root.classList.add("use-small-shadow");
+        }
+        var savedFilter = localStorage.getItem("Argon_Filter");
+        if (savedFilter && savedFilter !== "off") {
+          root.classList.add("filter-" + savedFilter);
+        }
+        var savedRadius = localStorage.getItem("Argon_Card_Radius");
+        if (savedRadius != null && savedRadius !== "") {
+          root.style.setProperty("--card-radius", savedRadius + "px");
+        }
+      })();
+    </script>
+    <link rel="alternate" type="application/rss+xml" title={config.site.title} href="/feed.xml" />
+    {config.agent.enabled && config.agent.llmsTxt && <link rel="alternate" type="text/plain" title="LLMs Directory" href="/llms.txt" />}
+    {config.agent.enabled && config.agent.jsonIndex && <link rel="alternate" type="application/json" title="Agent Index" href="/agent-index.json" />}
+    {config.agent.enabled && config.agent.jsonLd && jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)}></script>}
+    {fontHref && <link rel="stylesheet" href={fontHref} />}
+    {mathHref && <script src={mathHref} defer></script>}
+    <Fragment set:html={config.appearance.customHeadHtml} />
+  </head>
+  <body class:list={[{ "argon-smooth-scroll": config.motion.smoothScroll !== "disabled" }]}>
+    <Header config={config} />
+    <Banner config={config} />
+    <Fab config={config} />
+    <div id="content" class="site-content">
+      <slot name="page-info" />
+      {config.appearance.layout !== "single" && <Sidebar config={config} catalog={catalog} />}
+      <div id="primary" class:list={["content-area", { "argon-enter": config.motion.pjaxAnimation }]}>
+        <main id="main" class:list={["site-main", { "article-list article-list-home": home }]}>
+          <slot />
+          <Footer config={config} />
+        </main>
+      </div>
+    </div>
+    <script id="argon-public-config" type="application/json" set:html={JSON.stringify(clientConfig)}></script>
+    <script>
+      import { boot, preserveRootStateOnSwap } from "../client/index";
+      const start = () => {
+        const node = document.getElementById("argon-public-config");
+        const cfg = JSON.parse(node?.textContent || "{}");
+        boot(cfg);
+      };
+      document.addEventListener("astro:before-swap", preserveRootStateOnSwap);
+      document.addEventListener("astro:page-load", start);
+      start();
+    </script>
+    <Fragment set:html={config.appearance.customFootHtml} />
+  </body>
+</html>

@@ -1,0 +1,31 @@
+{
+  "name": "argon-astro-theme",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "config:compile": "node scripts/compile-config.mjs",
+    "predev": "node scripts/compile-config.mjs && node scripts/build-content.mjs",
+    "dev": "astro dev",
+    "sync": "node scripts/prepare-build.mjs",
+    "prebuild": "node scripts/compile-config.mjs && node scripts/sync-wordpress.mjs && node scripts/compile-config.mjs && node scripts/prepare-build.mjs && node scripts/build-content.mjs",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check:no-cms": "node scripts/verify-no-cms.ts",
+    "test": "node scripts/run-tests.mjs"
+  },
+  "dependencies": {
+    "astro": "7.4.8",
+    "katex": "^0.19.1",
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}

@@ -1,0 +1,109 @@
+---
+interface Props {
+  current: number;
+  total: number;
+}
+
+const { current, total } = Astro.props;
+
+function pageHref(page: number): string {
+  return page <= 1 ? "/" : `/page/${page}/`;
+}
+
+function buildRange(maxNumbers: number) {
+  let from = Math.max(current - Math.floor((maxNumbers - 1) / 2), 1);
+  let to = Math.min(current + maxNumbers - (current - from + 1), total);
+  if (to - from + 1 < maxNumbers) {
+    to = Math.min(current + Math.floor((maxNumbers - 1) / 2), total);
+    from = Math.max(current - (maxNumbers - (to - current + 1)), 1);
+  }
+  const pages: number[] = [];
+  for (let p = from; p <= to; p += 1) pages.push(p);
+  return { from, to, pages };
+}
+
+const desktop = total > 1 ? buildRange(7) : null;
+const mobile = total > 1 ? buildRange(5) : null;
+---
+{total > 1 && desktop && mobile && (
+  <>
+    <nav aria-label="Pagination">
+      <ul class="pagination">
+        {desktop.from > 1 && (
+          <li class="page-item">
+            <a aria-label="First Page" class="page-link" href={pageHref(1)}>
+              <i class="fa fa-angle-double-left" aria-hidden="true"></i>
+            </a>
+          </li>
+        )}
+        {current > 1 && (
+          <li class="page-item">
+            <a aria-label="Previous Page" class="page-link" href={pageHref(current - 1)}>
+              <i class="fa fa-angle-left" aria-hidden="true"></i>
+            </a>
+          </li>
+        )}
+        {desktop.pages.map((p) => (
+          p === current ? (
+            <li class="page-item active"><span class="page-link" style="cursor: default;">{p}</span></li>
+          ) : (
+            <li class="page-item"><a class="page-link" href={pageHref(p)}>{p}</a></li>
+          )
+        ))}
+        {current < total && (
+          <li class="page-item">
+            <a aria-label="Next Page" class="page-link" href={pageHref(current + 1)}>
+              <i class="fa fa-angle-right" aria-hidden="true"></i>
+            </a>
+          </li>
+        )}
+        {desktop.to < total && (
+          <li class="page-item">
+            <a aria-label="Last Page" class="page-link" href={pageHref(total)}>
+              <i class="fa fa-angle-double-right" aria-hidden="true"></i>
+            </a>
+          </li>
+        )}
+      </ul>
+    </nav>
+    <nav aria-label="Pagination">
+      <ul class="pagination pagination-mobile">
+        {mobile.from > 1 && (
+          <li class="page-item">
+            <a aria-label="First Page" class="page-link" href={pageHref(1)}>
+              <i class="fa fa-angle-double-left" aria-hidden="true"></i>
+            </a>
+          </li>
+        )}
+        {current > 1 && (
+          <li class="page-item">
+            <a aria-label="Previous Page" class="page-link" href={pageHref(current - 1)}>
+              <i class="fa fa-angle-left" aria-hidden="true"></i>
+            </a>
+          </li>
+        )}
+        {mobile.pages.map((p) => (
+          p === current ? (
+            <li class="page-item active"><span class="page-link" style="cursor: default;">{p}</span></li>
+          ) : (
+            <li class="page-item"><a class="page-link" href={pageHref(p)}>{p}</a></li>
+          )
+        ))}
+        {current < total && (
+          <li class="page-item">
+            <a aria-label="Next Page" class="page-link" href={pageHref(current + 1)}>
+              <i class="fa fa-angle-right" aria-hidden="true"></i>
+            </a>
+          </li>
+        )}
+        {mobile.to < total && (
+          <li class="page-item">
+            <a aria-label="Last Page" class="page-link" href={pageHref(total)}>
+              <i class="fa fa-angle-double-right" aria-hidden="true"></i>
+            </a>
+          </li>
+        )}
+      </ul>
+    </nav>
+  </>
+)}

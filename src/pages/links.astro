@@ -1,0 +1,40 @@
+---
+import Base from "../layouts/Base.astro";
+import { loadThemeConfig } from "../config/load";
+import { t } from "../lib/i18n";
+
+const config = loadThemeConfig();
+const lang = config.site.language;
+---
+<Base title={t(lang, "links")}>
+  <article class="post post-full card bg-white shadow-sm border-0">
+    <header class="post-header text-center">
+      <a class="post-title" href="/links/">{t(lang, "links")}</a>
+    </header>
+    <div class="post-content" id="post_content">
+      <div class="friend-links friend-links-style1">
+        <div class="row">
+          {config.friendLinks.map((link) => (
+            <div class="link mb-2 col-lg-6 col-md-6">
+              <div class:list={["card shadow-sm friend-link-container", { "no-avatar": !link.avatar }]}>
+                {link.avatar && (
+                  <img src={link.avatar} class="friend-link-avatar bg-gradient-secondary" alt={link.name} loading="lazy" />
+                )}<div class="friend-link-content">
+                  <div class="friend-link-title title text-primary">
+                    <a target="_blank" rel="noopener" href={link.url}>{link.name}</a>
+                  </div>
+                  <div class="friend-link-description">{link.description}</div>
+                  <div class="friend-link-links">
+                    <a href={link.url} target="_blank" rel="noopener" style="float:right; margin-right: 10px;">
+                      <i class="fa fa-angle-right" style="font-weight: bold;"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </article>
+</Base>

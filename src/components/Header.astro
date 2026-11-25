@@ -1,0 +1,61 @@
+---
+import type { ThemeConfig } from "../config/types";
+import { t } from "../lib/i18n";
+import NavMenu from "./NavMenu.astro";
+interface Props { config: ThemeConfig }
+const { config } = Astro.props;
+const title = config.toolbar.title || config.site.title;
+---
+<div id="toolbar">
+  <header class="header-global">
+    <nav id="navbar-main" class="navbar navbar-main navbar-expand-lg navbar-transparent navbar-light bg-primary headroom--not-bottom headroom--not-top headroom--pinned">
+      <div class="container">
+        <button id="open_sidebar" class="navbar-toggler" type="button" aria-expanded="false" aria-label="Toggle sidebar">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="navbar-brand mr-0">
+          {config.toolbar.icon && (
+            <a class="navbar-brand navbar-icon mr-lg-5" href={config.toolbar.iconLink || "/"} aria-label={title === "--hidden--" ? config.site.title : title}>
+              <img src={config.toolbar.icon} alt="" width="32" height="32" />
+            </a>
+          )}
+          {title !== "--hidden--" && <a class="navbar-brand navbar-title" href="/">{title}</a>}
+        </div>
+        <div class="navbar-collapse collapse" id="navbar_global">
+          <div class="navbar-collapse-header">
+            <div class="row align-items-center mb-3 d-lg-none">
+              <div class="col-8 collapse-brand">
+                <span class="font-weight-bold">{title === "--hidden--" ? config.site.title : title}</span>
+              </div>
+              <div class="col-4 collapse-close text-right">
+                <button type="button" class="navbar-toggler argon-mobile-menu-close" data-toggle="collapse" data-target="#navbar_global" aria-controls="navbar_global" aria-label="Close navigation">
+                  <span></span>
+                  <span></span>
+                </button>
+              </div>
+            </div>
+            <div class="input-group input-group-alternative">
+              <div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-search"></i></span></div>
+              <input id="navbar_search_input_mobile" class="form-control" placeholder={t(config.site.language, "search")} type="text" autocomplete="off" />
+            </div>
+          </div>
+          <NavMenu items={config.toolbar.menu} />
+          <ul class="navbar-nav align-items-lg-center ml-lg-auto">
+            <li id="navbar_search_container" class="nav-item">
+              <div id="navbar_search_input_container">
+                <div class="input-group input-group-alternative">
+                  <div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-search"></i></span></div>
+                  <input id="navbar_search_input" class="form-control" placeholder={t(config.site.language, "search")} type="text" autocomplete="off" />
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div id="navbar_menu_mask" data-toggle="collapse" data-target="#navbar_global"></div>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar_global" aria-controls="navbar_global" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon navbar-toggler-searcg-icon"></span>
+        </button>
+      </div>
+    </nav>
+  </header>
+</div>

@@ -1,0 +1,54 @@
+---
+import { shareLinks } from "../lib/share.mjs";
+interface Props { url: string; title: string }
+const { url, title } = Astro.props;
+const links = shareLinks(url, title);
+
+interface ShareVisual {
+  tooltip: string;
+  btnClass: string;
+  style?: string;
+  iconClass?: string;
+  textIcon?: string;
+}
+
+const visuals: Record<string, ShareVisual> = {
+  wechat: { tooltip: "分享到微信", btnClass: "btn btn-icon btn-success", iconClass: "fa fa-weixin" },
+  douban: { tooltip: "分享到豆瓣", btnClass: "btn btn-icon btn-primary", style: "background: #209261;border: none;", textIcon: "豆" },
+  qq: { tooltip: "分享到 QQ", btnClass: "btn btn-icon btn-primary", style: "background: #2196f3;border: none;", iconClass: "fa fa-qq" },
+  qzone: { tooltip: "分享到 QQ 空间", btnClass: "btn btn-icon btn-primary", style: "background: #ffc107;border: none;", iconClass: "fa fa-star" },
+  weibo: { tooltip: "分享到微博", btnClass: "btn btn-icon btn-warning", iconClass: "fa fa-weibo" },
+  facebook: { tooltip: "分享到 Facebook", btnClass: "btn btn-icon btn-primary", style: "background: #283593;border: none;", iconClass: "fa fa-facebook" },
+  twitter: { tooltip: "分享到 Twitter", btnClass: "btn btn-icon btn-primary", style: "background: #03a9f4;border: none;", iconClass: "fa fa-twitter" },
+  telegram: { tooltip: "分享到 Telegram", btnClass: "btn btn-icon btn-primary", style: "background: #42a5f5;border: none;", iconClass: "fa fa-telegram" },
+  "copy-link": { tooltip: "复制链接", btnClass: "btn btn-icon btn-default", iconClass: "fa fa-link" },
+};
+---
+<div id="share_container">
+  <div id="share" data-initialized="true">
+    {links.map((link) => {
+      const visual = visuals[link.id] ?? { tooltip: link.id, btnClass: "btn btn-icon btn-primary", iconClass: "fa fa-share-alt" };
+      return (
+        <a
+          id={link.id === "copy-link" ? "share_copy_link" : undefined}
+          class={"no-pjax icon-" + link.id}
+          href={link.href || undefined}
+          target={link.id === "wechat" ? undefined : "_blank"}
+          rel="noopener"
+          tooltip={visual.tooltip}
+        >
+          <button class={visual.btnClass} type="button" style={visual.style}>
+            {visual.textIcon ? (
+              <span aria-hidden="true">{visual.textIcon}</span>
+            ) : (
+              <span class="btn-inner--icon"><i class={visual.iconClass}></i></span>
+            )}
+          </button>
+        </a>
+      );
+    })}
+  </div>
+  <button id="share_show" class="btn btn-icon btn-primary" type="button" tooltip="分享">
+    <span class="btn-inner--icon"><i class="fa fa-share"></i></span>
+  </button>
+</div>

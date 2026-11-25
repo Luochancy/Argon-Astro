@@ -1,0 +1,1217 @@
+{
+  "auditedAt": "2026-11-11",
+  "source": "upstream/argon-theme master snapshot aaef37c",
+  "rule": "No original feature may be deleted or simplified without a row in this matrix. schema=present is not behavior=ported.",
+  "counts": {
+    "options": 128,
+    "features": 172,
+    "behaviorNotStarted": 0,
+    "behaviorPartial": 165
+  },
+  "features": [
+    {
+      "id": "argon_additional_content_after_post",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "article.afterPostHtml is rendered after the post. The preview post includes 文末补充."
+    },
+    {
+      "id": "argon_archives_timeline_show_month",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Archives pass article.timelineShowMonth into the timeline renderer. The preview still shows month nodes because the option defaults to on."
+    },
+    {
+      "id": "argon_archives_timeline_url",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Year links use article.archivesUrl and stay on the site. A wp-json base is replaced with /archives/."
+    },
+    {
+      "id": "argon_article_header_style",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The preview homepage includes the configured article header style class."
+    },
+    {
+      "id": "argon_article_list_layout",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The home list uses article-list-1, article-list-2, or article-list-3. The preview homepage includes article-list-1."
+    },
+    {
+      "id": "argon_article_list_waterflow",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The client lays out article cards when article.waterflow is not 1. The sample config keeps a single column."
+    },
+    {
+      "id": "argon_article_meta",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Article cards follow article.meta order. Missing views are omitted instead of showing a fake count. Edit time is not ported."
+    },
+    {
+      "id": "argon_assets_path",
+      "area": "theme-option",
+      "schema": "not-applicable",
+      "behavior": "not-applicable",
+      "note": "WordPress runtime path, update checker, or admin-only preview. Not a visitor-facing theme behavior."
+    },
+    {
+      "id": "argon_banner_background_color_type",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The preview banner includes the configured shape-primary color class."
+    },
+    {
+      "id": "argon_banner_background_hide_shapes",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The preview homepage includes shape-style-1 when shapes are not hidden."
+    },
+    {
+      "id": "argon_banner_background_url",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "banner.backgroundUrl is written as the banner background image. The sample config has no image, so the preview does not show one."
+    },
+    {
+      "id": "argon_banner_size",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Banner size maps to banner-mini, no-banner, or banner-as-cover. The sample uses the normal size, so the preview has the shaped banner without those extra classes."
+    },
+    {
+      "id": "argon_banner_subtitle",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The preview homepage includes banner-subtitle from the config."
+    },
+    {
+      "id": "argon_banner_title",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The preview homepage includes the banner title."
+    },
+    {
+      "id": "argon_banner_typing_effect_interval",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The preview banner title includes data-interval from banner.typingInterval."
+    },
+    {
+      "id": "argon_card_radius",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The preview homepage includes the card radius style from appearance.cardRadius."
+    },
+    {
+      "id": "argon_card_shadow",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Small card shadow adds use-small-shadow. Big shadow adds use-big-shadow. The preview homepage includes use-small-shadow."
+    },
+    {
+      "id": "argon_code_highlight_break_line",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "codeBreakLine adds hljs-break-line after highlight.js runs. It was not observed in a browser."
+    },
+    {
+      "id": "argon_code_highlight_hide_linenumber",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "codeHideLineNumber adds hljs-hide-linenumber after highlight.js runs. It was not observed in a browser."
+    },
+    {
+      "id": "argon_code_highlight_transparent_linenumber",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "codeTransparentLineNumber adds hljs-transparent-linenumber after highlight.js runs. It was not observed in a browser."
+    },
+    {
+      "id": "argon_code_theme",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The highlight client loads /argon/vendor/highlight/styles/{codeTheme}.css. The sample theme is vs2015."
+    },
+    {
+      "id": "argon_comment_allow_editing",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Editing posts only to /api/comments with action edit. The plugin checks the author email and keeps the previous text in argon_edit_history. A live WordPress update was not run."
+    },
+    {
+      "id": "argon_comment_allow_mailnotice",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The comment form can show a reply-notice checkbox. The private handler forwards mailNotice, and the plugin stores argon_mail_notice. It does not send mail."
+    },
+    {
+      "id": "argon_comment_allow_markdown",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Baked comments can render a small Markdown subset at build time. The live comment editor does not yet offer a Markdown toggle."
+    },
+    {
+      "id": "argon_comment_allow_privatemode",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Private baked comments keep the badge and omit the text from static HTML. A private viewing channel is not implemented."
+    },
+    {
+      "id": "argon_comment_avatar_vcenter",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "comments.avatarVcenter adds comment-avatar-vertical-center. The sample config leaves it off."
+    },
+    {
+      "id": "argon_comment_emotion_keyboard",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "A local keyboard inserts the original text emotions and :smile: stickers. Stickers render as comment-sticker from /argon/emotions. The full upstream sticker pack is not copied."
+    },
+    {
+      "id": "argon_comment_enable_qq_avatar",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "A 5 to 11 digit QQ number becomes a q1.qlogo.cn avatar. The comment list test confirms author email is not returned to the browser."
+    },
+    {
+      "id": "argon_comment_mailnotice_checkbox_checked",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "mailNoticeChecked controls whether that checkbox starts selected. No mail is sent."
+    },
+    {
+      "id": "argon_comment_need_captcha",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The private comment handler can require an HMAC captcha token. The browser challenge form is not wired yet, and the sample build does not enable it."
+    },
+    {
+      "id": "argon_comment_pagination_type",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Comment lists can be sliced into pages. The live WordPress endpoint still returns the full approved list; page mode is applied in the client."
+    },
+    {
+      "id": "argon_comment_ua",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Baked comments can show a parsed platform and browser in comment-useragent. The original icon font mapping is not fully ported."
+    },
+    {
+      "id": "argon_custom_assets_path",
+      "area": "theme-option",
+      "schema": "not-applicable",
+      "behavior": "not-applicable",
+      "note": "WordPress runtime path, update checker, or admin-only preview. Not a visitor-facing theme behavior."
+    },
+    {
+      "id": "argon_custom_html_foot",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "footer.html is rendered in the site footer. The preview homepage includes 本地页脚."
+    },
+    {
+      "id": "argon_custom_html_head",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "appearance.customHeadHtml is inserted in the document head. The preview includes the generator meta tag."
+    },
+    {
+      "id": "argon_darkmode_autoswitch",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "When appearance.darkmode is system and the visitor has not chosen, the page follows prefers-color-scheme. A stored choice wins."
+    },
+    {
+      "id": "argon_dateformat",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Post dates follow site.dateFormat. The preview homepage shows the YMD form. MDY and DMY are implemented but not shown in the current config."
+    },
+    {
+      "id": "argon_disable_codeblock_style",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "disableCodeblockStyle adds disable-codeblock-style on the html element. The sample config leaves the Argon code style on."
+    },
+    {
+      "id": "argon_disable_googlefont",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Google fonts are omitted when disableGoogleFont is true. The preview homepage does not load fonts.googleapis.com."
+    },
+    {
+      "id": "argon_disable_pjax_animation",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The content area gets argon-enter only when pjax animation is enabled. The preview homepage includes that class."
+    },
+    {
+      "id": "argon_donate_qrcode_url",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The post page shows article.donateQr. The preview post includes /argon/donate.svg and does not call WordPress."
+    },
+    {
+      "id": "argon_enable_amoled_dark",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "amoledDark adds amoled-dark on the html element. The sample config leaves it off."
+    },
+    {
+      "id": "argon_enable_banner_title_typing_effect",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The banner title uses the typing markup when banner.typing is on. The typing motion was not observed in a browser."
+    },
+    {
+      "id": "argon_enable_code_highlight",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Code highlight loads the local highlight.js bundle only when motion.codeHighlight is true. It does not use a CDN."
+    },
+    {
+      "id": "argon_enable_comment_pinning",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Pinned baked comments show the original badge class. Pinning through the private API is not implemented."
+    },
+    {
+      "id": "argon_enable_comment_upvote",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Comment upvote posts only to /api/comment-upvote. The handler test does not echo the CMS host."
+    },
+    {
+      "id": "argon_enable_fancybox",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Article images open a same-page lightbox and use fancybox-wrapper. This is not the upstream Fancybox plugin."
+    },
+    {
+      "id": "argon_enable_headroom",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Headroom toggles the original pinned and unpinned classes when toolbar.headroom is true. It was not observed in a browser."
+    },
+    {
+      "id": "argon_enable_immersion_color",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "immersionColor adds immersion-color. The sample config leaves it off."
+    },
+    {
+      "id": "argon_enable_into_article_animation",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "intoArticleAnimation adds post-preview on article cards."
+    },
+    {
+      "id": "argon_enable_lazyload",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Images with data-original load through IntersectionObserver when motion.lazyload is on. It was not observed in a browser."
+    },
+    {
+      "id": "argon_enable_login_css",
+      "area": "theme-option",
+      "schema": "not-applicable",
+      "behavior": "not-applicable",
+      "note": "WordPress runtime path, update checker, or admin-only preview. Not a visitor-facing theme behavior."
+    },
+    {
+      "id": "argon_enable_mobile_scale",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The viewport meta allows user scaling when mobileScale is on. The preview includes width=device-width."
+    },
+    {
+      "id": "argon_enable_pangu",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "CJK/Latin spacing runs at build time when motion.pangu includes article."
+    },
+    {
+      "id": "argon_enable_search_filters",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Local search can filter posts, pages, and shuoshuo without calling WordPress. The filter function is unit-tested."
+    },
+    {
+      "id": "argon_enable_smoothscroll_type",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "smoothScroll adds argon-smooth-scroll unless it is disabled. The other original scripts are not ported."
+    },
+    {
+      "id": "argon_enable_timezone_fix",
+      "area": "theme-option",
+      "schema": "not-applicable",
+      "behavior": "not-applicable",
+      "note": "WordPress runtime path, update checker, or admin-only preview. Not a visitor-facing theme behavior."
+    },
+    {
+      "id": "argon_enable_zoomify",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Zoomify toggles a scale transform from zoomifyScale. It was not observed in a browser."
+    },
+    {
+      "id": "argon_fab_show_darkmode_button",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The dark-mode FAB button is rendered when fab.darkmode is on and the client toggles the theme class. Not checked in a browser this round."
+    },
+    {
+      "id": "argon_fab_show_gotocomment_button",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The comment FAB button scrolls to #comments when fab.comment is on. Not checked in a browser this round."
+    },
+    {
+      "id": "argon_fab_show_settings_button",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The settings FAB opens the local appearance popup. Not checked in a browser this round."
+    },
+    {
+      "id": "argon_first_image_as_thumbnail_by_default",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "When a post has no cover, the card can use the first content image. CMS API image URLs are rejected."
+    },
+    {
+      "id": "argon_fold_long_comments",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Client folds a comment when its rendered height is over 800px, matching the original rule, and adds an expand button. It was not observed in a browser."
+    },
+    {
+      "id": "argon_fold_long_shuoshuo",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Home shuoshuo cards receive the foldable class when foldLongShuoshuo is on. The preview homepage includes shuoshuo cards."
+    },
+    {
+      "id": "argon_font",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "appearance.font serif adds use-serif. The sample uses sans."
+    },
+    {
+      "id": "argon_footer_html",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The preview homepage renders footer.html."
+    },
+    {
+      "id": "argon_get_captcha_by_ajax",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The form asks the same-origin /api/comments?captcha=1 endpoint. The test confirms that request does not call the CMS."
+    },
+    {
+      "id": "argon_gravatar_cdn",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Comment avatars can use a Gravatar hash and a configurable HTTPS CDN. wp-json hosts are rejected, and the email is not rendered."
+    },
+    {
+      "id": "argon_hide_categories",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "hideCategories removes categories from article card meta. The sample config leaves categories visible."
+    },
+    {
+      "id": "argon_hide_footer_author",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The preview footer still shows the Astro port credit because hideAuthor is off."
+    },
+    {
+      "id": "argon_hide_name_email_site_input",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "hideAuthorInputs removes the name, email, and site fields from the WordPress comment form. Logged-in WordPress user identity is not available in the static page."
+    },
+    {
+      "id": "argon_hide_shortcode_in_preview",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "When hideShortcodeInPreview is on, card summaries strip [shortcode] text. The sample config leaves the stripper off."
+    },
+    {
+      "id": "argon_home_show_shuoshuo",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The preview homepage includes shuoshuo cards because home.showShuoshuo is on."
+    },
+    {
+      "id": "argon_katex_cdn_url",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "KaTeX is loaded from /argon/vendor/katex, not from a CDN. A CDN URL is not used for KaTeX."
+    },
+    {
+      "id": "argon_lazyload_effect",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "lazyloadEffect fadeIn adds lazyload-fade. Other effect names stay on the plain lazyload class."
+    },
+    {
+      "id": "argon_lazyload_loading_style",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The fade effect is the only loading style implemented. The original numbered loading icons are not ported."
+    },
+    {
+      "id": "argon_lazyload_threshold",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Lazyload root margin uses motion.lazyloadThreshold. Values outside 0 to 5000 fall back to 800."
+    },
+    {
+      "id": "argon_math_render",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "KaTeX renders inline and display math at build time from local files. MathJax modes are not implemented."
+    },
+    {
+      "id": "argon_mathjax_cdn_url",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "MathJax is included only when math mode is mathjax and the URL is explicit HTTPS. CMS URLs are rejected. The sample stays on local KaTeX."
+    },
+    {
+      "id": "argon_mathjax_v2_cdn_url",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "MathJax 2 uses the same safe URL gate and is not loaded in the sample."
+    },
+    {
+      "id": "argon_outdated_info_days",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Posts older than outdatedDays show the configured tip. Zero disables it. The sample config is zero, so the preview does not show the tip."
+    },
+    {
+      "id": "argon_outdated_info_time_type",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Absolute mode appends the formatted date. Relative mode omits it. The sample uses absolute."
+    },
+    {
+      "id": "argon_outdated_info_tip_content",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The outdated notice uses article.outdatedTip. It is not shown while outdatedDays is 0."
+    },
+    {
+      "id": "argon_outdated_info_tip_type",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Outdated notices can be warning or info. The sample uses warning and outdatedDays is 0, so the preview post does not show it."
+    },
+    {
+      "id": "argon_page_background_banner_style",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Page background CSS can use a separate dark image and a transparent banner. The current sample config has no background image, so the preview does not show one."
+    },
+    {
+      "id": "argon_page_background_dark_url",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "A separate dark background image is used when background.darkUrl is set."
+    },
+    {
+      "id": "argon_page_background_opacity",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Background opacity is clamped between 0 and 1."
+    },
+    {
+      "id": "argon_page_background_url",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "pageBackgroundCss uses background.url. The sample has no background image."
+    },
+    {
+      "id": "argon_page_layout",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The preview homepage includes double-column for the default layout. single, triple, and reverse layouts add their own classes."
+    },
+    {
+      "id": "argon_pjax_disabled",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "ClientRouter is included only when motion.pjax is true. The sample keeps it on."
+    },
+    {
+      "id": "argon_reading_speed",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Reading time uses article.readingSpeed, readingSpeedEn, and readingSpeedCode. Code blocks count non-empty lines. The preview post still shows the reading label and no wp-json."
+    },
+    {
+      "id": "argon_reading_speed_code",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Reading time uses article.readingSpeed, readingSpeedEn, and readingSpeedCode. Code blocks count non-empty lines. The preview post still shows the reading label and no wp-json."
+    },
+    {
+      "id": "argon_reading_speed_en",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Reading time uses article.readingSpeed, readingSpeedEn, and readingSpeedCode. Code blocks count non-empty lines. The preview post still shows the reading label and no wp-json."
+    },
+    {
+      "id": "argon_reference_list_title",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Local content and headless snapshots both use applyReferences. A snapshot with a repeated reference produced a and b backlinks and no wp-json. A live WordPress round-trip was not run."
+    },
+    {
+      "id": "argon_related_post",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Single posts render a related-posts list from shared tags or categories. The preview post page includes that section."
+    },
+    {
+      "id": "argon_related_post_limit",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The related list is sliced to article.relatedLimit."
+    },
+    {
+      "id": "argon_related_post_sort_order",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "After the relevance score, related posts sort by relatedOrder. The sample is descending."
+    },
+    {
+      "id": "argon_related_post_sort_orderby",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "relatedOrderBy accepts date or title. The sample uses date."
+    },
+    {
+      "id": "argon_search_filters_type",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Search filters follow article.searchFilters. The preview search page includes post, page, and shuoshuo filters."
+    },
+    {
+      "id": "argon_seo_description",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The preview homepage includes a description meta tag from the site config."
+    },
+    {
+      "id": "argon_seo_keywords",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The preview homepage includes the keywords meta tag from site.keywords."
+    },
+    {
+      "id": "argon_show_comment_parent_info",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Baked comments can show the parent author. Live WordPress comments do not yet include that field."
+    },
+    {
+      "id": "argon_show_customize_theme_color_picker",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The settings popup includes the theme color picker when allowColorPicker is on."
+    },
+    {
+      "id": "argon_show_headindex_number",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Catalog items can be prefixed with 1, 1.1, 2 when article.showCatalogNumbers is true. The sample config leaves it off, so the preview does not show numbers."
+    },
+    {
+      "id": "argon_show_readingtime",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Reading time uses the original speed formula and labels. The sample post shows post-meta-detail-words. Code-line counting is approximate."
+    },
+    {
+      "id": "argon_show_sharebtn",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Share buttons use the original icon classes and public share URLs. They do not call WordPress."
+    },
+    {
+      "id": "argon_show_thumbnail_in_banner_in_content_page",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "When thumbnailInBanner is on, a post cover can become the banner background. CMS API image URLs are rejected. The sample post has no cover, so this page does not show that background."
+    },
+    {
+      "id": "argon_show_toolbar_mask",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "banner.toolbarMask adds toolbar-mask. The preview homepage includes that class."
+    },
+    {
+      "id": "argon_sidebar_announcement",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The sidebar renders sidebar.announcement. The preview homepage includes 本地公告."
+    },
+    {
+      "id": "argon_sidebar_auther_image",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The sidebar author image element is rendered and uses sidebar.authorImage when set. The sample has no image."
+    },
+    {
+      "id": "argon_sidebar_auther_name",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The preview homepage shows the sidebar author name."
+    },
+    {
+      "id": "argon_sidebar_author_description",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The sidebar shows authorDescription when it is set. The sample config includes a description."
+    },
+    {
+      "id": "argon_sidebar_banner_subtitle",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The preview sidebar includes 本地侧栏."
+    },
+    {
+      "id": "argon_sidebar_banner_title",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The sidebar banner title falls back to the site title. The preview uses Argon."
+    },
+    {
+      "id": "argon_text_gravatar",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Comments without a QQ number can show a Gravatar image from the email hash. The sample baked comments do not include hashes yet."
+    },
+    {
+      "id": "argon_theme_color",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The preview homepage includes the configured theme color #5e72e4."
+    },
+    {
+      "id": "argon_theme_color_hex_preview",
+      "area": "theme-option",
+      "schema": "not-applicable",
+      "behavior": "not-applicable",
+      "note": "WordPress runtime path, update checker, or admin-only preview. Not a visitor-facing theme behavior."
+    },
+    {
+      "id": "argon_toolbar_blur",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "toolbar.blur adds toolbar-blur. The preview homepage includes that class."
+    },
+    {
+      "id": "argon_toolbar_icon",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The preview homepage includes the toolbar icon image."
+    },
+    {
+      "id": "argon_toolbar_icon_link",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The toolbar icon links to toolbar.iconLink, defaulting to the site root. The preview includes /argon/toolbar-icon.svg."
+    },
+    {
+      "id": "argon_toolbar_title",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "The preview homepage includes the main toolbar."
+    },
+    {
+      "id": "argon_trim_words_count",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Card summaries are cut to article.trimWords. The sample uses 120."
+    },
+    {
+      "id": "argon_update_source",
+      "area": "theme-option",
+      "schema": "not-applicable",
+      "behavior": "not-applicable",
+      "note": "WordPress runtime path, update checker, or admin-only preview. Not a visitor-facing theme behavior."
+    },
+    {
+      "id": "argon_who_can_visit_comment_edit_history",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Previous comment text is stored in comment meta. There is no public history viewer yet."
+    },
+    {
+      "id": "argon_wp_path",
+      "area": "theme-option",
+      "schema": "not-applicable",
+      "behavior": "not-applicable",
+      "note": "WordPress runtime path, update checker, or admin-only preview. Not a visitor-facing theme behavior."
+    },
+    {
+      "id": "argon_zoomify_duration",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Zoomify transition duration uses motion.zoomifyDuration, clamped to 0-2000ms."
+    },
+    {
+      "id": "argon_zoomify_easing",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Zoomify transition easing uses motion.zoomifyEasing when it is a simple CSS timing value."
+    },
+    {
+      "id": "argon_zoomify_scale",
+      "area": "theme-option",
+      "schema": "present",
+      "behavior": "partial",
+      "note": "Zoomify scale uses motion.zoomifyScale. Values outside 0-2 fall back to 0.9."
+    },
+    {
+      "id": "template:index",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Home article list with shuoshuo mix-in"
+    },
+    {
+      "id": "template:single",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Single post, share, related, outdated, donate"
+    },
+    {
+      "id": "template:page",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Static page"
+    },
+    {
+      "id": "template:archive",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Category/tag/date archives"
+    },
+    {
+      "id": "template:search",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Search page and post-type filters"
+    },
+    {
+      "id": "template:404",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "404 page"
+    },
+    {
+      "id": "template:timeline",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "The archives page uses argon-timeline, year nodes, and month nodes. Year links are in-page anchors, not separate WordPress date archives."
+    },
+    {
+      "id": "template:shuoshuo",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Shuoshuo archive"
+    },
+    {
+      "id": "template:single-shuoshuo",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Single shuoshuo with comments and upvote"
+    },
+    {
+      "id": "template:msgboard",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Message board"
+    },
+    {
+      "id": "template:comments",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Baked comments render with comment-item and comment-upvote classes. Live WordPress comments still go through the private /api/comments endpoint. Captcha, markdown, and private comments are not ported."
+    },
+    {
+      "id": "template:sidebar",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Announcement, author, stats, menus, tools tab, catalog"
+    },
+    {
+      "id": "template:header",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Toolbar, 3-level menu, search, banner"
+    },
+    {
+      "id": "motion:pjax",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Astro ClientRouter is enabled when pjax is on. Built HTML contains astro-view-transitions-enabled. This is not the original jQuery pjax container swap."
+    },
+    {
+      "id": "motion:headroom",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Client toggles the original headroom---pinned and headroom---unpinned classes. Not compared in a browser yet."
+    },
+    {
+      "id": "motion:waterflow",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Column placement matches the original width breakpoints and shortest-column rule. The DOM binder is wired, but it was not observed in a browser."
+    },
+    {
+      "id": "motion:lazyload",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Images with data-original load through IntersectionObserver. Not compared in a browser yet."
+    },
+    {
+      "id": "motion:zoomify",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Images can toggle the zoomify/zoomed classes and a scale transform from the configured scale. This is not the upstream zoomify library and was not checked in a browser."
+    },
+    {
+      "id": "motion:fancybox",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Article images get the original zoomify and fancybox-wrapper classes and open a same-page lightbox. This is not the upstream Fancybox plugin and was not checked in a browser."
+    },
+    {
+      "id": "motion:highlight",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Local highlight.js and the vs2015 theme are copied into the theme. The client loads only /argon/vendor/highlight when code highlight is enabled. Line-number behavior was not observed in a browser."
+    },
+    {
+      "id": "motion:math",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "KaTeX 0.19.1 is vendored under /argon/vendor/katex. Inline and display math are rendered at build time. MathJax 2/3 modes are still not implemented."
+    },
+    {
+      "id": "motion:pangu",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "CJK/Latin spacing is applied at build time when motion.pangu includes article. The spacing function is unit-tested. It does not call a remote service."
+    },
+    {
+      "id": "motion:typing",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Banner typing"
+    },
+    {
+      "id": "motion:darkmode",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Session dark mode, system, time, AMOLED"
+    },
+    {
+      "id": "motion:fab",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "FAB position, settings, radius, filters, color"
+    },
+    {
+      "id": "motion:catalog",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "The sidebar catalog links to heading ids and marks the section nearest the scroll position. It was not observed in a browser."
+    },
+    {
+      "id": "motion:smoothscroll",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "When smooth scroll is not disabled, the built page adds argon-smooth-scroll and uses CSS scroll-behavior. The other three original smooth-scroll scripts are not ported."
+    },
+    {
+      "id": "shortcode:all",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Cover, gallery, media-text, and the video shortcode now drop wp-json, wp-admin, and admin-ajax.php URLs even when rewriting does not change them. Not every shortcode or block interaction is covered."
+    },
+    {
+      "id": "block:argon",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Argon collapse/alert/admonition/github/progressbar have a build-time renderer. Tab and timeline blocks are not covered yet."
+    },
+    {
+      "id": "block:core",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "The RSS block always links to the local /feed.xml and ignores a WordPress feed URL. The preview Gutenberg page includes wp-block-rss and no wp-json. Not every core interaction is covered."
+    },
+    {
+      "id": "block:third-party",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Unknown blocks keep saved HTML, media URLs are rewritten, and compatibilityReport marks them saved-html-only. That is not a certification."
+    },
+    {
+      "id": "feature:friend-links",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Link manager and sidebar friend links"
+    },
+    {
+      "id": "feature:menus",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Toolbar, sidebar, author links, three levels"
+    },
+    {
+      "id": "feature:password-post",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "A password field causes the body and the password itself to be omitted from the static page. Unlocking through WordPress login is intentionally not used. A private unlock API is not implemented yet. Headless snapshot now drops password-protected bodies, passwords, and their media URLs."
+    },
+    {
+      "id": "feature:seo",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Description, keywords, Open Graph"
+    },
+    {
+      "id": "feature:i18n",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "zh-CN, zh-TW, en, ru"
+    },
+    {
+      "id": "feature:widgets",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Local sidebar widgets render from argon.config.yml into leftbar-tools. WordPress widget instances are not imported yet."
+    },
+    {
+      "id": "feature:github-card",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "GitHub cards use the original class names. Stats can be filled at build time from the GitHub API through an injected fetch, never through admin-ajax. The sample build does not call GitHub."
+    },
+    {
+      "id": "feature:shuoshuo-upvote",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Local mode increments the count in sessionStorage and does not call WordPress. Headless mode posts only to /api/shuoshuo-upvote. Neither path was observed in a browser."
+    },
+    {
+      "id": "feature:comment-upvote",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Comment upvote posts only to /api/comment-upvote. The handler test confirms the CMS host is not returned to the browser. A live WordPress comment meta update was not run."
+    },
+    {
+      "id": "headless:snapshot",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "syncDecision skips local builds, fails closed when WordPress credentials are missing, and syncs only when all three env values are present. A live WordPress round-trip was not run."
+    },
+    {
+      "id": "headless:no-runtime-cms",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "Image, file, button, and saved HTML src/href values that still contain wp-json, wp-admin, or admin-ajax.php are removed even when URL rewriting does not change them. A full static rebuild was not run this round."
+    },
+    {
+      "id": "headless:private-comments",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "The comment handler refuses cross-origin calls and does not echo the CMS host. Platform adapters exist; they are not deployed in this run."
+    },
+    {
+      "id": "headless:ci",
+      "area": "feature",
+      "schema": "n/a",
+      "behavior": "partial",
+      "note": "pnpm build now runs sync-wordpress before the fail-closed snapshot check. Missing credentials exit 1 and remove the completion marker. The GitHub workflow uses Node 24. It was not fired against a live account."
+    }
+  ]
+}

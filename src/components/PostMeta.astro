@@ -1,0 +1,112 @@
+---
+import type { ThemeConfig } from "../config/types";
+import type { PostEntry } from "../lib/content/queries";
+import { articleMeta } from "../lib/article-meta.mjs";
+import { formatDate } from "../lib/date-format.mjs";
+import { readingTime, wordCount } from "../lib/reading-time.mjs";
+import { t } from "../lib/i18n";
+
+interface Props {
+  post: PostEntry;
+  config: ThemeConfig;
+}
+
+const { post, config } = Astro.props;
+const lang = config.site.language;
+const isZh = lang.toLowerCase().startsWith("zh");
+const date = formatDate(post.data.date, config.site.dateFormat);
+
+const meta = articleMeta(
+  config.article.meta,
+  {
+    date,
+    categories: config.article.hideCategories ? [] : post.data.categories,
+    commentCount: post.data.commentCount,
+  },
+  { author: config.sidebar.authorName || config.site.title },
+);
+
+type MetaBadge =
+  | { kind: "sticky" }
+  | { kind: "locked" }
+  | { kind: "meta"; item: (typeof meta)[number] };
+
+const entries: MetaBadge[] = [];
+if (post.data.sticky) entries.push({ kind: "sticky" });
+if (post.data.locked) entries.push({ kind: "locked" });
+for (const item of meta) entries.push({ kind: "meta", item });
+
+const showReading = !post.data.locked && config.article.showReadingTime && !post.data.hideReadingTime;
+const words = showReading ? wordCount(post.html) : null;
+const reading = showReading
+  ? readingTime(post.html, {
+      cn: config.article.readingSpeed,
+      en: config.article.readingSpeedEn,
+      code: config.article.readingSpeedCode,
+    })
+  : "";
+---
+<div class="post-meta">
+  {entries.map((entry, idx) => (
+    <>
+      {idx > 0 && <div class="post-meta-devide">|</div>}
+      {entry.kind === "sticky" && (
+        <div class="post-meta-detail post-meta-detail-stickey">
+          <i class="fa fa-thumb-tack" aria-hidden="true"></i>
+          {t(lang, "sticky")}
+        </div>
+      )}
+      {entry.kind === "locked" && (
+        <div class="post-meta-detail post-meta-detail-needpassword">
+          <i class="fa fa-lock" aria-hidden="true"></i>
+          {isZh ? "需要密码" : "Password required"}
+        </div>
+      )}
+      {entry.kind === "meta" && entry.item.key === "time" && (
+        <div class="post-meta-detail post-meta-detail-time">
+          <i class="fa fa-clock-o" aria-hidden="true"></i>
+          <time datetime={post.data.date.toISOString()} title={date}>{entry.item.text}</time>
+        </div>
+      )}
+      {entry.kind === "meta" && entry.item.key === "categories" && (
+        <div class="post-meta-detail post-meta-detail-categories">
+          <i class="fa fa-bookmark-o" aria-hidden="true"></i>
+          {(entry.item.links ?? []).map((cat: { label: string; href: string }, catIdx: number) => (
+            <>
+              <a href={cat.href} class="post-meta-detail-catagory-link">{cat.label}</a>
+              {catIdx < (entry.item.links?.length ?? 0) - 1 && <span class="post-meta-detail-catagory-space">,</span>}
+            </>
+          ))}
+        </div>
+      )}
+      {entry.kind === "meta" && entry.item.key === "comments" && (
+        <div class="post-meta-detail post-meta-detail-comments">
+          <i class="fa fa-comments-o" aria-hidden="true"></i>
+          {entry.item.text}
+        </div>
+      )}
+      {entry.kind === "meta" && entry.item.key === "author" && (
+        <div class="post-meta-detail post-meta-detail-author">
+          <i class="fa fa-user-circle-o" aria-hidden="true"></i>
+          {entry.item.text}
+        </div>
+      )}
+    </>
+  ))}
+  {showReading && words && (
+    <>
+      <br />
+      <div class="post-meta-detail post-meta-detail-words">
+        <i class="fa fa-file-word-o" aria-hidden="true"></i>
+        <span title={words.code > 0 ? (isZh ? `包含 ${words.code} 行代码` : `Includes ${words.code} lines of code`) : undefined}>
+          {words.total} {isZh ? "字" : "words"}
+        </span>
+      </div>
+      <div class="post-meta-devide">|</div>
+      <div class="post-meta-detail post-meta-detail-words">
+        <i class="fa fa-hourglass-end" aria-hidden="true"></i>
+        {reading}
+      </div>
+    </>
+  )}
+</div>

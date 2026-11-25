@@ -1,0 +1,30 @@
+---
+import Base from "../layouts/Base.astro";
+import PostCard from "../components/PostCard.astro";
+import ShuoshuoCard from "../components/ShuoshuoCard.astro";
+import Pagination from "../components/Pagination.astro";
+import { loadThemeConfig } from "../config/load";
+import { publishedMoments, publishedPosts } from "../lib/content/queries";
+import { excerpt } from "../lib/reading";
+import { previewText } from "../lib/preview-text.mjs";
+import { buildSiteJsonLd } from "../lib/agent/jsonld.mjs";
+
+const config = loadThemeConfig();
+const posts = publishedPosts();
+const moments = config.home.showShuoshuo ? publishedMoments().slice(0, 3) : [];
+const pageSize = config.home.pageSize;
+const visible = posts.slice(0, pageSize);
+const pages = Math.max(1, Math.ceil(posts.length / pageSize));
+const jsonLd = buildSiteJsonLd(config);
+---
+<Base home description={config.site.description} jsonLd={jsonLd}>
+  {moments.map((item) => (
+    <ShuoshuoCard item={item} language={config.site.language} fold={config.motion.foldLongShuoshuo} variant="preview">
+      <Fragment set:html={item.html} />
+    </ShuoshuoCard>
+  ))}
+  {visible.map((post) => (
+    <PostCard post={post} config={config} summary={excerpt(previewText(post.data.description ?? "", config.article.hideShortcodeInPreview), config.article.trimWords)} />
+  ))}
+  <Pagination current={1} total={pages} />
+</Base>

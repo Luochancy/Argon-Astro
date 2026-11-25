@@ -1,0 +1,21 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "headers": [
+    {
+      "source": "/:path*.md",
+      "headers": [
+        { "key": "Content-Type", "value": "text/plain; charset=utf-8" },
+        { "key": "Content-Disposition", "value": "inline" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
+      ]
+    }
+  ],
+  "rewrites": [
+    { "source": "/api/comments", "destination": "/api/comments" },
+    { "source": "/api/comment-upvote", "destination": "/api/comment-upvote" },
+    { "source": "/api/shuoshuo-upvote", "destination": "/api/shuoshuo-upvote" },
+    { "source": "/api/deploy", "destination": "/api/deploy" }
+  ]
+}

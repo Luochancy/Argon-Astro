@@ -1,0 +1,7 @@
+---
+interface Props {
+  Content: (props: Record<string, never>) => unknown;
+}
+const { Content } = Astro.props;
+---
+<Content />

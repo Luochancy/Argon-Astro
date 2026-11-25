@@ -1,0 +1,52 @@
+---
+import Base from "../layouts/Base.astro";
+import Share from "../components/Share.astro";
+import { loadThemeConfig } from "../config/load";
+import { publishedPosts } from "../lib/content/queries";
+import { renderTimeline } from "../lib/timeline.mjs";
+import { formatDate } from "../lib/date-format.mjs";
+import { t } from "../lib/i18n";
+
+const config = loadThemeConfig();
+const lang = config.site.language;
+const isZh = lang.toLowerCase().startsWith("zh");
+const posts = publishedPosts();
+const latestDate = posts.length > 0 ? formatDate(posts[0].data.date, config.site.dateFormat) : "";
+const html = renderTimeline(
+  posts.map((post) => ({
+    title: post.data.title,
+    href: "/posts/" + post.id + "/",
+    date: post.data.date.toISOString(),
+  })),
+  config.article.timelineShowMonth !== false,
+  config.article.archivesUrl,
+  lang,
+);
+---
+<Base title={t(lang, "archives")} catalog>
+  <article class="post post-full card bg-white shadow-sm border-0">
+    <header class="post-header text-center">
+      <a class="post-title" href="/archives/">{t(lang, "archives")}</a>
+      <div class="post-meta">
+        {latestDate && (
+          <div class="post-meta-detail post-meta-detail-time">
+            <i class="fa fa-clock-o" aria-hidden="true"></i>
+            <time datetime={posts[0].data.date.toISOString()}>{latestDate}</time>
+          </div>
+        )}
+        {latestDate && <div class="post-meta-devide">|</div>}
+        <div class="post-meta-detail post-meta-detail-words">
+          <i class="fa fa-book" aria-hidden="true"></i>
+          <span>{isZh ? `共 ${posts.length} 篇文章` : `${posts.length} posts`}</span>
+        </div>
+      </div>
+    </header>
+    <div class="post-content" id="post_content" set:html={html}></div>
+  </article>
+  {config.article.showShare && (
+    <Share
+      url={Astro.site ? new URL("/archives/", Astro.site).toString() : "/archives/"}
+      title={t(lang, "archives")}
+    />
+  )}
+</Base>

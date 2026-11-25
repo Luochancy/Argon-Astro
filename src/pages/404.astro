@@ -1,0 +1,15 @@
+---
+import Base from "../layouts/Base.astro";
+---
+<Base title="404">
+  <article class="post post-full card bg-white shadow-sm border-0 text-center">
+    <header class="post-header"><span class="post-title">404</span></header>
+    <div class="post-content">
+      <p>找不到页面</p>
+      <form action="/search/" method="get">
+        <input class="form-control" name="q" type="search" aria-label="search" />
+      </form>
+      <a href="/">Home</a>
+    </div>
+  </article>
+</Base>

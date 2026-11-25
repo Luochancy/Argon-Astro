@@ -1,0 +1,35 @@
+---
+import Base from "../../layouts/Base.astro";
+import ShuoshuoCard from "../../components/ShuoshuoCard.astro";
+import { loadThemeConfig } from "../../config/load";
+import { publishedMoments } from "../../lib/content/queries";
+import { t } from "../../lib/i18n";
+
+const config = loadThemeConfig();
+const lang = config.site.language;
+const isZh = lang.toLowerCase().startsWith("zh");
+const items = publishedMoments();
+---
+<Base title={t(lang, "shuoshuo")}>
+  <div slot="page-info" class="page-information-card-container">
+    <div class="page-information-card card bg-gradient-secondary shadow-lg border-0">
+      <div class="card-body">
+        <h3 class="text-black">{t(lang, "shuoshuo")}</h3>
+        <p class="text-black mt-3 mb-0 opacity-8">
+          <i class="fa fa-quote-left mr-1"></i>
+          {items.length} {isZh ? "条说说" : "moments"}
+        </p>
+      </div>
+    </div>
+  </div>
+  {items.length === 0 && (
+    <div class="card shadow-sm bg-white mb-4">
+      <div class="card-body text-center">{t(lang, "empty")}</div>
+    </div>
+  )}
+  {items.map((item) => (
+    <ShuoshuoCard item={item} language={lang} fold={config.motion.foldLongShuoshuo} variant="full">
+      <Fragment set:html={item.html} />
+    </ShuoshuoCard>
+  ))}
+</Base>

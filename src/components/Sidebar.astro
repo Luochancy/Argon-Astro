@@ -1,0 +1,155 @@
+---
+import type { ThemeConfig } from "../config/types";
+import { t } from "../lib/i18n";
+import { renderWidgets } from "../lib/widgets.mjs";
+import { renderRichMarkdown } from "../lib/rich-text.mjs";
+import { publishedPosts, termCounts } from "../lib/content/queries";
+
+interface Props { config: ThemeConfig; catalog?: boolean }
+const { config, catalog = false } = Astro.props;
+const lang = config.site.language;
+const isZh = lang.toLowerCase().startsWith("zh");
+const title = config.sidebar.bannerTitle || config.site.title;
+const author = config.sidebar.authorName || config.site.title;
+const announcementHtml = renderRichMarkdown(config.sidebar.announcement);
+const widgets = renderWidgets(config.sidebar.widgets);
+const hasMultipleTabs = Boolean(catalog || widgets);
+
+const posts = publishedPosts();
+const postCount = posts.length;
+const categoryCount = termCounts(posts, "categories").size;
+const tagCount = termCounts(posts, "tags").size;
+
+const DEFAULT_AVATAR =
+  "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiIHZpZXdCb3g9IjAgMCAxMDAgMTAwIiB4bWw6c3BhY2U9InByZXNlcnZlIj48cmVjdCBmaWxsPSIjNUU3MkU0MjIiIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIi8+PGc+PGcgb3BhY2l0eT0iMC4zIj48cGF0aCBmaWxsPSIjNUU3MkU0IiBkPSJNNzQuMzksMzIuODZjLTAuOTgtMS43LTMuMzktMy4wOS01LjM1LTMuMDlINDUuNjJjLTEuOTYsMC00LjM3LDEuMzktNS4zNSwzLjA5TDI4LjU3LDUzLjE1Yy0wLjk4LDEuNy0wLjk4LDQuNDgsMCw2LjE3bDExLjcxLDIwLjI5YzAuOTgsMS43LDMuMzksMy4wOSw1LjM1LDMuMDloMjMuNDNjMS45NiwwLDQuMzctMS4zOSw1LjM1LTMuMDlMODYuMSw1OS4zMmMwLjk4LTEuNywwLjk4LTQuNDgsMC02LjE3TDc0LjM5LDMyLjg2eiIvPjwvZz48ZyBvcGFjaXR5PSIwLjgiPjxwYXRoIGZpbGw9IiM1RTcyRTQiIGQ9Ik02Mi4wNCwyMC4zOWMtMC45OC0xLjctMy4zOS0zLjA5LTUuMzUtMy4wOUgzMS43M2MtMS45NiwwLTQuMzcsMS4zOS01LjM1LDMuMDlMMTMuOSw0Mi4wMWMtMC45OCwxLjctMC45OCw0LjQ4LDAsNi4xN2wxMi40OSwyMS42MmMwLjk4LDEuNywzLjM5LDMuMDksNS4zNSwzLjA5aDI0Ljk3YzEuOTYsMCw0LjM3LTEuMzksNS4zNS0zLjA5bDEyLjQ5LTIxLjYyYzAuOTgtMS43LDAuOTgtNC40OCwwLTYuMTdMNjIuMDQsMjAuMzl6Ii8+PC9nPjwvZz48L3N2Zz4=";
+const avatarUrl = config.sidebar.authorImage || DEFAULT_AVATAR;
+
+const normPath = (p: string) => {
+  const clean = p.split(/[?#]/)[0] || "/";
+  return clean === "/" ? "/" : clean.replace(/\/+$/, "") + "/";
+};
+const currentPath = normPath(Astro.url.pathname);
+const isMenuCurrent = (href: string, children: { href: string }[] = []) => {
+  if (!href || href.startsWith("http") || href === "#") return false;
+  const target = normPath(href);
+  if (target === currentPath) return true;
+  return children.some((c) => normPath(c.href) === currentPath);
+};
+---
+<div id="sidebar_mask"></div>
+<aside id="leftbar" class="leftbar widget-area" role="complementary">
+  {announcementHtml && (
+    <div id="leftbar_announcement" class="card bg-white shadow-sm border-0">
+      <div class="leftbar-announcement-body">
+        <div class="leftbar-announcement-title text-white">{t(lang, "announcement")}</div>
+        <div class="leftbar-announcement-content text-white" set:html={announcementHtml}></div>
+      </div>
+    </div>
+  )}
+  <div id="leftbar_part1" class="widget widget_search card bg-white shadow-sm border-0">
+    <div class="leftbar-banner card-body">
+      <span class="leftbar-banner-title text-white">{title}</span>
+      {config.sidebar.bannerSubtitle && <span class="leftbar-banner-subtitle text-white">{config.sidebar.bannerSubtitle}</span>}
+    </div>
+    <ul id="leftbar_part1_menu" class="leftbar-menu">
+      {config.sidebar.menu.map((item) => (
+        <li class:list={[
+          "leftbar-menu-item",
+          {
+            "leftbar-menu-item-haschildren": item.children.length > 0,
+            current: isMenuCurrent(item.href, item.children),
+          },
+        ]}>
+          <a href={item.href}>
+            {item.icon && <i class={`fa ${item.icon}`} aria-hidden="true"></i>}
+            {item.label}
+          </a>
+          {item.children.length > 0 && (
+            <ul class="leftbar-menu-item leftbar-menu-subitem shadow-sm">
+              {item.children.map((child) => (
+                <li class:list={["leftbar-menu-item", { current: isMenuCurrent(child.href) }]}>
+                  <a href={child.href}>
+                    {child.icon && <i class={`fa ${child.icon}`} aria-hidden="true"></i>}
+                    {child.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </li>
+      ))}
+    </ul>
+    <div class="card-body text-center leftbar-search-button">
+      <button id="leftbar_search_container" class="btn btn-secondary btn-lg active btn-sm btn-block border-0" type="button">
+        <i class="menu-item-icon fa fa-search mr-0"></i> {t(lang, "searchTitle")}
+        <input id="leftbar_search_input" type="text" placeholder={t(lang, "search")} class="form-control form-control-alternative" autocomplete="off" />
+      </button>
+    </div>
+  </div>
+  <div id="leftbar_part2" class="widget widget_search card bg-white shadow-sm border-0">
+    <div id="leftbar_part2_inner" class="card-body">
+      <div class="nav-wrapper" style={hasMultipleTabs ? "padding-top: 5px;" : "padding-top: 5px; display: none;"}>
+        <ul class="nav nav-pills nav-fill" role="tablist">
+          {catalog && (
+            <li class="nav-item sidebar-tab-switcher" role="presentation">
+              <a class="active show" id="leftbar_tab_catalog_btn" data-toggle="tab" href="#leftbar_tab_catalog" role="tab" aria-controls="leftbar_tab_catalog" aria-selected="true" no-pjax>{t(lang, "catalog")}</a>
+            </li>
+          )}
+          <li class="nav-item sidebar-tab-switcher" role="presentation">
+            <a class:list={[{ "active show": !catalog }]} id="leftbar_tab_overview_btn" data-toggle="tab" href="#leftbar_tab_overview" role="tab" aria-controls="leftbar_tab_overview" aria-selected={!catalog ? "true" : "false"} no-pjax>{t(lang, "overview")}</a>
+          </li>
+          {widgets && (
+            <li class="nav-item sidebar-tab-switcher" role="presentation">
+              <a id="leftbar_tab_tools_btn" data-toggle="tab" href="#leftbar_tab_tools" role="tab" aria-controls="leftbar_tab_tools" aria-selected="false" no-pjax>{isZh ? "功能" : "Tools"}</a>
+            </li>
+          )}
+        </ul>
+      </div>
+      <div>
+        <div class="tab-content" style="padding: 10px 10px 0 10px;">
+          {catalog && (
+            <div class="tab-pane fade active show" id="leftbar_tab_catalog" role="tabpanel" aria-labelledby="leftbar_tab_catalog_btn">
+              <div id="leftbar_catalog" data-numbers={config.article.showCatalogNumbers ? "true" : "false"}></div>
+            </div>
+          )}
+          <div class:list={["tab-pane fade text-center", { "active show": !catalog }]} id="leftbar_tab_overview" role="tabpanel" aria-labelledby="leftbar_tab_overview_btn">
+            <div id="leftbar_overview_author_image" class="rounded-circle shadow-sm" style={"background-image:url(" + avatarUrl + ")"} role="img" aria-label={author}></div>
+            <h6 id="leftbar_overview_author_name">{author}</h6>
+            {config.sidebar.authorDescription && <h6 id="leftbar_overview_author_description">{config.sidebar.authorDescription}</h6>}
+            <nav class="site-state">
+              <div class="site-state-item site-state-posts">
+                <a href="/archives/">
+                  <span class="site-state-item-count" data-count="posts">{postCount}</span>
+                  <span class="site-state-item-name">{t(lang, "articles")}</span>
+                </a>
+              </div>
+              <div class="site-state-item site-state-categories">
+                <a href="/archives/">
+                  <span class="site-state-item-count" data-count="categories">{categoryCount}</span>
+                  <span class="site-state-item-name">{t(lang, "categories")}</span>
+                </a>
+              </div>
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/">
+                  <span class="site-state-item-count" data-count="tags">{tagCount}</span>
+                  <span class="site-state-item-name">{t(lang, "tags")}</span>
+                </a>
+              </div>
+            </nav>
+            {config.sidebar.authorLinks.length > 0 && (
+              <div class="site-author-links">
+                {config.sidebar.authorLinks.map((link) => (
+                  <div class="site-author-links-item"><a href={link.href} rel="noopener" target="_blank">{link.label}</a></div>
+                ))}
+              </div>
+            )}
+            <div style="height: 20px;"></div>
+          </div>
+          {widgets && (
+            <div class="tab-pane fade" id="leftbar_tab_tools" role="tabpanel" aria-labelledby="leftbar_tab_tools_btn" set:html={widgets}></div>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+</aside>

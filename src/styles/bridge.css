@@ -1,0 +1,37 @@
+/* PJAX content entrance: opacity-only fade so transforms never break fixed descendants. */
+#primary.argon-enter {
+  animation: argon-content-in 0.3s ease;
+}
+
+@keyframes argon-content-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.argon-modal-open {
+  overflow: hidden;
+}
+
+.leftbar-announcement-content > :last-child,
+.additional-content-after-post > :last-child {
+  margin-bottom: 0;
+}
+
+.leftbar-announcement-content p {
+  margin-bottom: 0.45rem;
+}
+
+.leftbar-announcement-content a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.leftbar-announcement-content ul,
+.leftbar-announcement-content ol {
+  padding-left: 1.2rem;
+  margin-bottom: 0.45rem;
+}
+
+.additional-content-after-post p {
+  margin-bottom: 0.5rem;
+}

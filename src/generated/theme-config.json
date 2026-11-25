@@ -1,0 +1,261 @@
+{
+  "version": 1,
+  "source": "local",
+  "site": {
+    "title": "Argon",
+    "description": "A clean static blog powered by Argon.",
+    "url": "https://example.com",
+    "language": "zh-CN",
+    "keywords": "Argon, Blog",
+    "dateFormat": "YMD"
+  },
+  "appearance": {
+    "color": "#5e72e4",
+    "allowColorPicker": true,
+    "cardRadius": 10,
+    "cardShadow": "big",
+    "font": "sans",
+    "layout": "double",
+    "immersionColor": true,
+    "amoledDark": false,
+    "darkmode": "system",
+    "articleHeaderStyle": "article-header-style-2",
+    "mobileScale": true,
+    "disableGoogleFont": true,
+    "customHeadHtml": "",
+    "customFootHtml": ""
+  },
+  "banner": {
+    "size": "full",
+    "title": "",
+    "subtitle": "",
+    "typing": false,
+    "typingInterval": 100,
+    "backgroundUrl": "",
+    "hideShapes": false,
+    "colorType": "shape-primary",
+    "toolbarMask": false
+  },
+  "background": {
+    "url": "",
+    "darkUrl": "",
+    "opacity": 1,
+    "bannerStyle": "normal"
+  },
+  "toolbar": {
+    "title": "",
+    "icon": "/argon/toolbar-icon.svg",
+    "iconLink": "/",
+    "blur": true,
+    "headroom": "false",
+    "menu": [
+      {
+        "label": "首页",
+        "href": "/"
+      },
+      {
+        "label": "说说",
+        "href": "/shuoshuo/"
+      },
+      {
+        "label": "归档",
+        "href": "/archives/"
+      },
+      {
+        "label": "友链",
+        "href": "/links/"
+      }
+    ]
+  },
+  "sidebar": {
+    "announcement": "",
+    "bannerTitle": "",
+    "bannerSubtitle": "",
+    "authorName": "Argon",
+    "authorDescription": "",
+    "authorImage": "",
+    "menu": [
+      {
+        "label": "首页",
+        "href": "/",
+        "icon": "fa-home"
+      },
+      {
+        "label": "说说",
+        "href": "/shuoshuo/",
+        "icon": "fa-comments-o"
+      },
+      {
+        "label": "归档",
+        "href": "/archives/",
+        "icon": "fa-archive"
+      },
+      {
+        "label": "关于",
+        "href": "/about/",
+        "icon": "fa-user-o"
+      }
+    ],
+    "authorLinks": [
+      {
+        "label": "GitHub",
+        "href": "https://github.com/solstice23/argon-theme"
+      }
+    ],
+    "widgets": [
+      {
+        "type": "links",
+        "title": "导航",
+        "items": [
+          {
+            "label": "归档",
+            "href": "/archives/"
+          },
+          {
+            "label": "说说",
+            "href": "/shuoshuo/"
+          }
+        ]
+      }
+    ]
+  },
+  "article": {
+    "listLayout": "1",
+    "waterflow": "1",
+    "meta": [
+      "time",
+      "categories",
+      "comments"
+    ],
+    "hideCategories": false,
+    "showReadingTime": true,
+    "readingSpeed": 300,
+    "readingSpeedEn": 160,
+    "readingSpeedCode": 80,
+    "trimWords": 175,
+    "hideShortcodeInPreview": true,
+    "intoArticleAnimation": true,
+    "thumbnailInBanner": false,
+    "firstImageAsThumbnail": true,
+    "showShare": true,
+    "related": "tag",
+    "relatedLimit": 6,
+    "relatedOrderBy": "date",
+    "relatedOrder": "desc",
+    "outdatedDays": 0,
+    "outdatedTip": "本文最后更新于 %date_delta% 天前，其中的信息可能已经有所发展或是发生改变。",
+    "outdatedTipType": "warning",
+    "outdatedTimeType": "absolute",
+    "archivesUrl": "/archives/",
+    "donateQr": "",
+    "afterPostHtml": "",
+    "showCatalogNumbers": true,
+    "timelineShowMonth": true,
+    "enableSearchFilters": true,
+    "searchFilters": [
+      "post",
+      "page",
+      "shuoshuo"
+    ],
+    "referenceTitle": "参考"
+  },
+  "footer": {
+    "html": "",
+    "hideAuthor": false
+  },
+  "motion": {
+    "lazyload": true,
+    "lazyloadThreshold": 800,
+    "lazyloadEffect": "fadeIn",
+    "lazyloadLoadingStyle": "1",
+    "zoomify": false,
+    "zoomifyDuration": 200,
+    "zoomifyEasing": "cubic-bezier(0.4,0,0,1)",
+    "zoomifyScale": 0.9,
+    "readingProgress": true,
+    "fancybox": true,
+    "smoothScroll": "1",
+    "pangu": "",
+    "foldLongComments": false,
+    "foldLongShuoshuo": false,
+    "pjax": true,
+    "pjaxAnimation": true,
+    "codeHighlight": true,
+    "codeTheme": "vs2015",
+    "codeHideLineNumber": false,
+    "codeTransparentLineNumber": false,
+    "codeBreakLine": true,
+    "disableCodeblockStyle": false,
+    "math": "none",
+    "katexCdn": "",
+    "mathjaxCdn": "",
+    "mathjaxV2Cdn": ""
+  },
+  "fab": {
+    "darkmode": false,
+    "comment": true,
+    "settings": true
+  },
+  "home": {
+    "showShuoshuo": true,
+    "pageSize": 10
+  },
+  "comments": {
+    "provider": "wordpress",
+    "giscus": {
+      "repo": "",
+      "repoId": "",
+      "category": "Announcements",
+      "categoryId": "",
+      "mapping": "pathname",
+      "lang": "zh-CN"
+    },
+    "waline": {
+      "serverURL": "",
+      "lang": "zh-CN"
+    },
+    "twikoo": {
+      "envId": "",
+      "region": ""
+    },
+    "artalk": {
+      "server": "",
+      "site": ""
+    },
+    "wordpress": {
+      "endpoint": "/api/comments"
+    },
+    "allowMailNotice": true,
+    "mailNoticeChecked": false,
+    "allowMarkdown": true,
+    "allowPrivateMode": true,
+    "hideAuthorInputs": false,
+    "captcha": true,
+    "captchaAjax": false,
+    "emotionKeyboard": true,
+    "allowEdit": true,
+    "editHistoryVisibility": "admin",
+    "enablePinning": true,
+    "enableUpvote": true,
+    "enableQqAvatar": true,
+    "textGravatar": true,
+    "showUa": true,
+    "showParentInfo": true,
+    "paginationType": "feed",
+    "avatarVcenter": false,
+    "gravatarCdn": ""
+  },
+  "friendLinks": [],
+  "agent": {
+    "enabled": true,
+    "robotsTxt": true,
+    "llmsTxt": true,
+    "markdownMirrors": true,
+    "jsonIndex": true,
+    "jsonLd": true,
+    "webMcp": true,
+    "allowTrainingCrawlers": true,
+    "customRobotsTxt": "",
+    "customLlmsTxt": ""
+  }
+}

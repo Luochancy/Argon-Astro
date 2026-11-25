@@ -1,0 +1,40 @@
+# Cloudflare Workers (with Static Assets) deployment configuration for Argon Astro.
+# Connect this repo in Cloudflare Dashboard -> Workers & Pages -> Create Worker:
+#   Root directory: / (default)
+#   Build command:  pnpm build
+#   Deploy command: npx wrangler deploy
+#
+# Runtime Secrets & Variables (configure via Dashboard or `wrangler secret put` — NEVER commit):
+#   WP_URL               Headless WordPress base URL (e.g. https://cms.example.com)
+#   WP_USER              WordPress username for Application Password
+#   WP_APP_PASSWORD      WordPress Application Password
+#   ARGON_DEPLOY_SECRET  Shared HMAC secret if using /api/deploy
+#   ARGON_CAPTCHA_SECRET Secret for comment math captcha (when enabled)
+#   DEPLOY_HOOK_URL      Optional downstream Cloudflare Workers Builds deploy hook URL
+#   ARGON_ROBOTS_TXT     Optional runtime /robots.txt content (overrides or replaces build output)
+#   ARGON_LLMS_TXT       Optional runtime /llms.txt content (overrides or replaces build output)
+#   ARGON_LLMS_FULL_TXT  Optional runtime /llms-full.txt content (overrides or replaces build output)
+
+name = "argon-astro"
+main = "./platform/cloudflare/worker.mjs"
+compatibility_date = "2026-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+# Static bundles, fonts, media, and feeds bypass the Worker (zero Worker invocations);
+# /api/*, page routes, and /robots.txt + /llms*.txt hit the Worker for APIs,
+# `Accept: text/markdown` negotiation, and runtime Serverless robots/llms injection.
+run_worker_first = [
+  "/*",
+  "!/_astro/*",
+  "!/argon/*",
+  "!/media/*",
+  "!/favicon.ico",
+  "!/sitemap.xml",
+  "!/feed.xml",
+  "!/agent-index.json",
+]
+html_handling = "force-trailing-slash"
+not_found_handling = "404-page"

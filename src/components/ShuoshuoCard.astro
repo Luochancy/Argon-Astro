@@ -1,0 +1,135 @@
+---
+import type { ShuoshuoEntry } from "../lib/content/queries";
+import { t } from "../lib/i18n";
+
+interface Props {
+  item: ShuoshuoEntry;
+  language: string;
+  fold: boolean;
+  variant?: "preview" | "full";
+}
+
+const { item, language, fold, variant = "preview" } = Astro.props;
+const isZh = language.toLowerCase().startsWith("zh");
+const href = "/shuoshuo/" + item.id + "/";
+const date = item.data.date;
+const month = date.getMonth() + 1;
+const day = String(date.getDate()).padStart(2, "0");
+const year = date.getFullYear();
+const hm = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+const hms = `${hm}:${String(date.getSeconds()).padStart(2, "0")}`;
+const upvoteId = item.data.wpId ?? item.id;
+---
+{variant === "full" ? (
+  <div class="shuoshuo-container">
+    <div class="shuoshuo-meta shadow-sm">
+      <span>
+        <i class="fa fa-calendar-o" aria-hidden="true"></i>
+        <span class="shuoshuo-date-month">{month}</span>{isZh ? " 月 " : " / "}
+        <span class="shuoshuo-date-date">{day}</span>{isZh ? " 日 , " : " / "}
+        <span class="shuoshuo-date-year">{year}</span>
+        <div class="post-meta-devide">|</div>
+        <i class="fa fa-clock-o" aria-hidden="true"></i>
+        <span class="shuoshuo-date-time">{hms}</span>
+      </span>
+      {item.data.sticky && (
+        <>
+          <div class="post-meta-devide">|</div>
+          <div class="post-meta-detail post-meta-detail-words">
+            <i class="fa fa-thumb-tack" aria-hidden="true"></i>
+            {t(language, "sticky")}
+          </div>
+        </>
+      )}
+      {item.data.mood && (
+        <>
+          <div class="post-meta-devide">|</div>
+          <div class="post-meta-detail post-meta-detail-words">{item.data.mood}</div>
+        </>
+      )}
+    </div>
+    <article class:list={["card shuoshuo-main bg-white shadow-sm border-0", { "shuoshuo-foldable": fold }]} id={"moment-" + item.id}>
+      {item.data.title && <a class="shuoshuo-title" href={href}>{item.data.title}</a>}
+      <div class="shuoshuo-content"><slot /></div>
+      {item.data.images.length > 0 && (
+        <div class="shuoshuo-images">
+          {item.data.images.map((src) => <img src={src} alt="" loading="lazy" />)}
+        </div>
+      )}
+      <div class="shuoshuo-operations">
+        <a href={href + "#post_comment"} class="shuoshuo-preview-add-comment-out-container-a">
+          <button class="shuoshuo-preview-add-comment btn btn-icon btn-outline-primary btn-sm" type="button">
+            <span class="btn-inner--icon"><i class="fa fa-comments-o"></i></span>
+            <span class="btn-inner--text" style="margin-left: 2px;">
+              {item.data.commentCount > 0 ? item.data.commentCount : t(language, "comments")}
+            </span>
+          </button>
+        </a>
+        <button class="shuoshuo-upvote btn btn-icon btn-outline-primary btn-sm" type="button" data-id={upvoteId}>
+          <span class="btn-inner--icon"><i class="fa fa-thumbs-o-up"></i></span>
+          <span class="btn-inner--text" style="margin-left: 2px;">
+            <span class="shuoshuo-upvote-num">{item.data.upvotes}</span>
+            <i class="fa fa-spinner fa-spin" style="margin-left: 0;"></i>
+          </span>
+        </button>
+      </div>
+    </article>
+  </div>
+) : (
+  <div class:list={["shuoshuo-preview-container card bg-white shadow-sm border-0", { "shuoshuo-foldable": fold }]} id={"moment-" + item.id}>
+    {item.data.title && <a class="shuoshuo-title" href={href}>{item.data.title}</a>}
+    <div class="shuoshuo-content"><slot /></div>
+    {item.data.images.length > 0 && (
+      <div class="shuoshuo-images">
+        {item.data.images.map((src) => <img src={src} alt="" loading="lazy" />)}
+      </div>
+    )}
+    <div class="shuoshuo-preview-meta">
+      <span>
+        <i class="fa fa-calendar-o" aria-hidden="true"></i>
+        <span class="shuoshuo-date-month">{month}</span>{isZh ? " 月 " : " / "}
+        <span class="shuoshuo-date-date">{day}</span>{isZh ? " 日 , " : " / "}
+        <span class="shuoshuo-date-year">{year}</span>
+        <div class="post-meta-devide">|</div>
+        <i class="fa fa-clock-o" aria-hidden="true"></i>
+        <span class="shuoshuo-date-time">{hm}</span>
+      </span>
+      {item.data.sticky && (
+        <>
+          <div class="post-meta-devide">|</div>
+          <div class="post-meta-detail post-meta-detail-words">
+            <i class="fa fa-thumb-tack" aria-hidden="true"></i>
+            {t(language, "sticky")}
+          </div>
+        </>
+      )}
+      {item.data.mood && (
+        <>
+          <div class="post-meta-devide">|</div>
+          <div class="post-meta-detail post-meta-detail-words">{item.data.mood}</div>
+        </>
+      )}
+      <div class="post-meta-devide">|</div>
+      <button type="button" class="shuoshuo-upvote btn btn-sm" data-id={upvoteId}>
+        <i class="fa fa-thumbs-o-up" aria-hidden="true"></i>
+        <span class="shuoshuo-upvote-num">{item.data.upvotes}</span>
+      </button>
+      {item.data.commentCount > 0 && (
+        <>
+          <div class="post-meta-devide">|</div>
+          <div class="post-meta-detail post-meta-detail-words">
+            <i class="fa fa-comments-o" aria-hidden="true"></i>
+            {item.data.commentCount}
+          </div>
+        </>
+      )}
+    </div>
+    <a
+      class="shuoshuo-preview-link btn btn-outline-primary btn-icon-only rounded-circle"
+      href={href}
+      aria-label={item.data.title ? (isZh ? `查看说说：${item.data.title}` : `View moment: ${item.data.title}`) : (isZh ? "查看说说详情" : "View moment")}
+    >
+      <span class="btn-inner--icon"><i class="fa fa-arrow-right" aria-hidden="true"></i></span>
+    </a>
+  </div>
+)}

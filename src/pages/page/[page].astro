@@ -1,0 +1,31 @@
+---
+import Base from "../../layouts/Base.astro";
+import PostCard from "../../components/PostCard.astro";
+import Pagination from "../../components/Pagination.astro";
+import { loadThemeConfig } from "../../config/load";
+import { publishedPosts } from "../../lib/content/queries";
+import { excerpt } from "../../lib/reading";
+import { previewText } from "../../lib/preview-text.mjs";
+
+export async function getStaticPaths() {
+  const config = loadThemeConfig();
+  const posts = await publishedPosts();
+  const pages = Math.max(1, Math.ceil(posts.length / config.home.pageSize));
+  return Array.from({ length: Math.max(0, pages - 1) }, (_, index) => ({
+    params: { page: String(index + 2) },
+  }));
+}
+
+const config = loadThemeConfig();
+const page = Number(Astro.params.page);
+const posts = await publishedPosts();
+const start = (page - 1) * config.home.pageSize;
+const visible = posts.slice(start, start + config.home.pageSize);
+const pages = Math.max(1, Math.ceil(posts.length / config.home.pageSize));
+---
+<Base title={"Page " + page}>
+  {visible.map((post) => (
+    <PostCard post={post} config={config} summary={excerpt(previewText(post.data.description ?? "", config.article.hideShortcodeInPreview), config.article.trimWords)} />
+  ))}
+  <Pagination current={page} total={pages} />
+</Base>
