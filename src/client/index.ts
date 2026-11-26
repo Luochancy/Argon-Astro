@@ -16,7 +16,6 @@ import { bindMath } from "./math";
 import { bindNavbar } from "./navbar";
 import { bindNProgress, preserveNProgressOnSwap } from "./nprogress";
 import { bindPasswordPost } from "./password-post";
-import { bindReadingProgress } from "./reading";
 import { bindSearch } from "./search";
 import { bindShare } from "./share";
 import { bindSidebar } from "./sidebar";
@@ -44,6 +43,7 @@ const PRESERVED_ROOT_VARS = [
   "--themecolor-R",
   "--themecolor-G",
   "--themecolor-B",
+  "--themecolor-rgbstr",
   "--themecolor-H",
   "--themecolor-S",
   "--themecolor-L",
@@ -140,6 +140,35 @@ function bindIntoArticleAnimation(signal?: AbortSignal): void {
   });
 }
 
+/** Show Argon outdated-post toast notification when tip type is set to toast/info. */
+function showOutdatedPostToast(): void {
+  const marker = document.getElementById("post_outdate_toast");
+  if (!marker) return;
+  const text = (marker.dataset.text || "").trim();
+  marker.remove();
+  if (!text) return;
+
+  let container = document.querySelector<HTMLElement>(".argon-toast-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.className = "argon-toast-container";
+    document.body.appendChild(container);
+  }
+  const toast = document.createElement("div");
+  toast.className = "argon-toast is-theme shadow-sm";
+  toast.setAttribute("role", "status");
+  toast.innerHTML =
+    '<i class="argon-toast-icon fa fa-info-circle" aria-hidden="true"></i>' +
+    '<div class="argon-toast-body"><div class="argon-toast-message"></div></div>';
+  toast.querySelector(".argon-toast-message")!.textContent = text;
+  container.appendChild(toast);
+  window.requestAnimationFrame(() => toast.classList.add("is-visible"));
+  window.setTimeout(() => {
+    toast.classList.remove("is-visible");
+    window.setTimeout(() => toast.remove(), 260);
+  }, 8000);
+}
+
 /** Initialize or re-bind all client interactions for the current document. */
 export function boot(config: ClientConfig): void {
   // Guard against duplicate immediate boot when initial script and astro:page-load fire back-to-back.
@@ -163,7 +192,7 @@ export function boot(config: ClientConfig): void {
   bindDonate(signal);
   bindBlocks(signal);
   bindHeadroom(config.toolbar.headroom, config.toolbar.blur, signal);
-  bindReadingProgress(config.motion.readingProgress, signal);
+  showOutdatedPostToast();
   bindLazyload(
     config.motion.lazyload,
     config.motion.lazyloadThreshold,

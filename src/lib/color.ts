@@ -33,6 +33,7 @@ export function themeColorStyle(hex: string, radius: number): string {
     + ";--themecolor-R:" + rgb.r
     + ";--themecolor-G:" + rgb.g
     + ";--themecolor-B:" + rgb.b
+    + ";--themecolor-rgbstr:" + rgb.r + "," + rgb.g + "," + rgb.b
     + ";--themecolor-H:" + hsl.h
     + ";--themecolor-S:" + hsl.s
     + ";--themecolor-L:" + hsl.l

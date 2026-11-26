@@ -79,8 +79,12 @@ const related = entry.kind === "post"
 const postIndex = entry.kind === "post" ? allPosts.findIndex((item) => item.id === entry.id) : -1;
 const prev = postIndex >= 0 ? allPosts[postIndex + 1] : undefined;
 const next = postIndex >= 0 ? allPosts[postIndex - 1] : undefined;
-const outdated = entry.kind === "post" && isOutdated(entry.data.date, config.article.outdatedDays);
-const outdatedDeltaDays = Math.max(0, Math.floor((Date.now() - entry.data.date.getTime()) / 86400000));
+const outdatedUseModified = config.article.outdatedTimeType === "relative" || config.article.outdatedTimeType === "modifiedtime";
+const outdatedRefDate = outdatedUseModified ? (entry.data.modifiedDate || entry.data.date) : entry.data.date;
+const outdated = entry.kind === "post" && !entry.data.locked && isOutdated(outdatedRefDate, config.article.outdatedDays);
+const postDeltaDays = Math.max(0, Math.floor((Date.now() - entry.data.date.getTime()) / 86400000));
+const modifyDeltaDays = Math.max(0, Math.floor((Date.now() - (entry.data.modifiedDate || entry.data.date).getTime()) / 86400000));
+const outdatedDeltaDays = outdatedUseModified ? modifyDeltaDays : postDeltaDays;
 const bannerThumb = entry.kind === "post" ? bannerThumbnailCss(config.article.thumbnailInBanner, entry.data.cover) : "";
 const hasHeaderThumb = entry.kind === "post" && Boolean(entry.data.cover) && !config.article.thumbnailInBanner;
 const afterPostRendered = entry.kind === "post"
@@ -147,9 +151,17 @@ const jsonLd = entry.kind === "post"
           </>
         )}
       </header>
-      {config.motion.readingProgress !== false && <div id="reading-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>}
       <div class="post-content" id="post_content">
-        {outdated && <div set:html={outdatedNotice(config.article.outdatedTip, config.article.outdatedTipType, config.article.outdatedTimeType, formatDate(entry.data.date, config.site.dateFormat, timeZone), outdatedDeltaDays)}></div>}
+        {outdated && (
+          <Fragment set:html={outdatedNotice(
+            config.article.outdatedTip,
+            config.article.outdatedTipType,
+            config.article.outdatedTimeType,
+            formatDate(outdatedRefDate, config.site.dateFormat, timeZone),
+            outdatedDeltaDays,
+            { postDeltaDays, modifyDeltaDays },
+          )} />
+        )}
         <Fragment set:html={entry.html} />
       </div>
       {config.article.donateQr && (

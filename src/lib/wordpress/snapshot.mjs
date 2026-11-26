@@ -115,14 +115,19 @@ export async function writeSnapshot(client, root) {
   const downloads = [];
   const origin = typeof client.origin === "string" && client.origin.trim() ? client.origin.trim() : "";
 
-  const registerMedia = (id, sourceUrl) => {
+  const registerMedia = (id, sourceUrl, options = {}) => {
     const url = String(sourceUrl || "").trim();
     if (!shouldMirrorUrl(url, origin)) return url;
     if (map.has(url)) return map.get(url);
     const local = localMediaPath(id, url);
     map.set(url, local);
     if (client.download) {
-      downloads.push({ url, target: join(root, "public" + local) });
+      downloads.push({
+        url,
+        local,
+        target: join(root, "public" + local),
+        keepOriginal: Boolean(options.keepOriginal),
+      });
     }
     return local;
   };
@@ -148,31 +153,72 @@ export async function writeSnapshot(client, root) {
   delete remote.source;
   delete remote.media;
 
+  // Register same-origin theme images before downloading (keep site.icon format intact for apple-touch-icon).
   if (remote.site && shouldMirrorUrl(remote.site.icon, origin)) {
-    remote.site.icon = registerMedia(0, remote.site.icon);
+    registerMedia(0, remote.site.icon, { keepOriginal: true });
   }
   if (remote.banner && shouldMirrorUrl(remote.banner.backgroundUrl, origin)) {
-    remote.banner.backgroundUrl = registerMedia(0, remote.banner.backgroundUrl);
+    registerMedia(0, remote.banner.backgroundUrl);
   }
   if (remote.background && shouldMirrorUrl(remote.background.url, origin)) {
-    remote.background.url = registerMedia(0, remote.background.url);
+    registerMedia(0, remote.background.url);
   }
   if (remote.background && shouldMirrorUrl(remote.background.darkUrl, origin)) {
-    remote.background.darkUrl = registerMedia(0, remote.background.darkUrl);
+    registerMedia(0, remote.background.darkUrl);
   }
   if (remote.toolbar && shouldMirrorUrl(remote.toolbar.icon, origin)) {
-    remote.toolbar.icon = registerMedia(0, remote.toolbar.icon);
+    registerMedia(0, remote.toolbar.icon);
   }
   if (remote.sidebar && shouldMirrorUrl(remote.sidebar.authorImage, origin)) {
-    remote.sidebar.authorImage = registerMedia(0, remote.sidebar.authorImage);
+    registerMedia(0, remote.sidebar.authorImage);
   }
   if (remote.article && shouldMirrorUrl(remote.article.donateQr, origin)) {
-    remote.article.donateQr = registerMedia(0, remote.article.donateQr);
+    registerMedia(0, remote.article.donateQr);
   }
   if (Array.isArray(remote.friendLinks)) {
     for (const link of remote.friendLinks) {
       if (link && shouldMirrorUrl(link.avatar, origin)) {
-        link.avatar = registerMedia(0, link.avatar);
+        registerMedia(0, link.avatar);
+      }
+    }
+  }
+
+  if (client.download && downloads.length > 0) {
+    const concurrency = Number(client.concurrency) > 0 ? Number(client.concurrency) : 6;
+    await runWithConcurrency(downloads, concurrency, async ({ url, local, target, keepOriginal }) => {
+      const resolved = await client.download(url, target, { local, keepOriginal });
+      if (typeof resolved === "string" && resolved.startsWith("/")) {
+        map.set(url, resolved);
+      }
+    });
+  }
+
+  // Apply final local paths (including any build-time .webp conversions) to theme config.
+  if (remote.site && map.has(remote.site.icon)) {
+    remote.site.icon = map.get(remote.site.icon);
+  }
+  if (remote.banner && map.has(remote.banner.backgroundUrl)) {
+    remote.banner.backgroundUrl = map.get(remote.banner.backgroundUrl);
+  }
+  if (remote.background && map.has(remote.background.url)) {
+    remote.background.url = map.get(remote.background.url);
+  }
+  if (remote.background && map.has(remote.background.darkUrl)) {
+    remote.background.darkUrl = map.get(remote.background.darkUrl);
+  }
+  if (remote.toolbar && map.has(remote.toolbar.icon)) {
+    remote.toolbar.icon = map.get(remote.toolbar.icon);
+  }
+  if (remote.sidebar && map.has(remote.sidebar.authorImage)) {
+    remote.sidebar.authorImage = map.get(remote.sidebar.authorImage);
+  }
+  if (remote.article && map.has(remote.article.donateQr)) {
+    remote.article.donateQr = map.get(remote.article.donateQr);
+  }
+  if (Array.isArray(remote.friendLinks)) {
+    for (const link of remote.friendLinks) {
+      if (link && map.has(link.avatar)) {
+        link.avatar = map.get(link.avatar);
       }
     }
   }
@@ -207,11 +253,6 @@ export async function writeSnapshot(client, root) {
     if (remote.sidebar && Array.isArray(remote.sidebar.friendLinks)) {
       remote.sidebar.friendLinks = relativizeMenuTree(remote.sidebar.friendLinks);
     }
-  }
-
-  if (client.download && downloads.length > 0) {
-    const concurrency = Number(client.concurrency) > 0 ? Number(client.concurrency) : 6;
-    await runWithConcurrency(downloads, concurrency, ({ url, target }) => client.download(url, target));
   }
 
   const rewriteUrl = (url) => {

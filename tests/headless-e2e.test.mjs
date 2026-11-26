@@ -70,6 +70,8 @@ const server = createServer((req, res) => {
       },
       article: {
         meta: ["time", "edittime", "views", "categories", "comments"],
+        outdatedDays: 1,
+        outdatedTipType: "warning",
       },
       friendLinks: [{ name: "Ext", url: "https://ext.example", avatar: "https://cdn.invalid/friend.png" }],
       // Attempt to override comments.provider — must be ignored by compile-config.mjs.
@@ -87,8 +89,8 @@ const server = createServer((req, res) => {
           slug: "headless-gutenberg",
           permalink: "/archives/101.html",
           title: "Headless Gutenberg Post",
-          date: "2026-11-25T00:00:00.000Z",
-          modifiedDate: "2026-11-25T02:00:00.000Z",
+          date: "2026-10-01T00:00:00.000Z",
+          modifiedDate: "2026-10-02T02:00:00.000Z",
           excerpt: "Synced from mock WP",
           tags: ["Headless"],
           categories: ["CMS"],
@@ -215,11 +217,13 @@ try {
   const postFile = join(root, "dist/archives/101.html");
   assert.equal(statSync(postFile).isFile(), true, "WordPress .html permalink must be a flat file");
   const postHtml = readFileSync(postFile, "utf8");
-  assert.match(postHtml, /\/media\/wp\/10-hero\.png/);
+  assert.match(postHtml, /\/media\/wp\/10-hero\.webp/);
   assert.match(postHtml, /collapse-block/);
   assert.match(postHtml, /data-wp-id="101"/);
   assert.match(postHtml, /data-views-post-id="101">128</);
   assert.match(postHtml, /post-meta-detail-edittime/);
+  assert.match(postHtml, /<div class="post-content" id="post_content">\s*<div class="post-outdated-info"><i class="fa fa-info-circle"/);
+  assert.equal(postHtml.includes('id="reading-progress"'), false, "must not emit duplicate top reading-progress bar");
   assert.match(postHtml, /id="blog_categories"/);
   assert.match(postHtml, /id="blog_tags"/);
   assert.match(postHtml, /WP Widget Link/);
@@ -229,7 +233,11 @@ try {
   assert.match(postHtml, /https%3A%2F%2Fblog\.argon-test\.example%2Farchives%2F101\.html/);
   assert.equal(postHtml.includes("example.com"), false, "production SITE_URL must replace example.com placeholder");
   assert.equal(postHtml.includes(wpUrl), false);
-  assert.equal(existsSync(join(root, "public/media/wp/10-hero.png")), true);
+  const webpFile = join(root, "public/media/wp/10-hero.webp");
+  assert.equal(existsSync(webpFile), true, "mirrored PNG must auto-convert to .webp during build");
+  const webpBytes = readFileSync(webpFile);
+  assert.equal(webpBytes.subarray(0, 4).toString("ascii"), "RIFF");
+  assert.equal(webpBytes.subarray(8, 12).toString("ascii"), "WEBP");
   assert.equal(existsSync(join(root, "dist/archives/101.md")), true);
 
   // Verify sitemap.xml and feed.xml emit absolute SITE_URL links.
@@ -242,10 +250,10 @@ try {
   const shuoshuoCheck = readFileSync(join(root, "dist/shuoshuo/index.html"), "utf8");
   assert.match(shuoshuoCheck, /09:00:00/);
 
-  // Verify date archive pages (/archives/date/2026/ and /archives/date/2026/11/) were emitted.
+  // Verify date archive pages (/archives/date/2026/ and /archives/date/2026/10/) were emitted.
   const yearArchive = readFileSync(join(root, "dist/archives/date/2026/index.html"), "utf8");
   assert.match(yearArchive, /Headless Gutenberg Post/);
-  const monthArchive = readFileSync(join(root, "dist/archives/date/2026/11/index.html"), "utf8");
+  const monthArchive = readFileSync(join(root, "dist/archives/date/2026/10/index.html"), "utf8");
   assert.match(monthArchive, /Headless Gutenberg Post/);
 
   // Verify full-text search index includes public post body and excludes locked post body.
@@ -264,10 +272,10 @@ try {
   const secretHtml = readFileSync(join(root, "dist/posts/secret-post/index.html"), "utf8");
   assert.equal(secretHtml.includes("TOP_SECRET_SHOULD_NOT_LEAK"), false);
 
-  // Verify headless shuoshuo page built cleanly with rewritten image.
+  // Verify headless shuoshuo page built cleanly with rewritten WebP image.
   const shuoshuoHtml = readFileSync(join(root, "dist/shuoshuo/index.html"), "utf8");
   assert.match(shuoshuoHtml, /Headless shuoshuo entry/);
-  assert.match(shuoshuoHtml, /\/media\/wp\/10-hero\.png/);
+  assert.match(shuoshuoHtml, /\/media\/wp\/10-hero\.webp/);
 
   console.log("headless e2e ok");
 } finally {

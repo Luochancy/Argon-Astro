@@ -255,7 +255,7 @@ export function bindFab(config: ClientConfig, signal?: AbortSignal): void {
     backToTopBtn?.classList.toggle("fabtn-hidden", scrollTop < 400);
 
     const article = document.querySelector<HTMLElement>("article.post.post-full");
-    if (!article) {
+    if (!article || config.motion.readingProgress === false) {
       readingBtn?.classList.add("fabtn-hidden");
       return;
     }

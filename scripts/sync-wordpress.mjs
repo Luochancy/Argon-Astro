@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { convertBufferToWebp, isConvertibleRaster, toWebpPath } from "../src/lib/media/webp.mjs";
 import { snapshotFailed, writeSnapshot } from "../src/lib/wordpress/snapshot.mjs";
 import { syncDecision } from "../src/lib/wordpress/sync-decision.mjs";
 
@@ -23,6 +24,9 @@ if (decision.action === "fail") {
 const auth = "Basic " + Buffer.from(user + ":" + password).toString("base64");
 const wpOrigin = new URL(url).origin;
 const syncUserAgent = "Argon-Astro-Sync/1.0";
+const webpEnabled = process.env.ARGON_IMAGE_WEBP !== "false";
+const webpQuality = Number(process.env.ARGON_IMAGE_WEBP_QUALITY || 82);
+const webpStats = { converted: 0, beforeBytes: 0, afterBytes: 0 };
 
 const client = {
   origin: wpOrigin,
@@ -50,8 +54,15 @@ const client = {
     }
     return items;
   },
-  async download(sourceUrl, target) {
-    if (existsSync(target)) return;
+  async download(sourceUrl, target, options = {}) {
+    const wantWebp = webpEnabled && !options.keepOriginal && isConvertibleRaster(target);
+    const webpTarget = wantWebp ? toWebpPath(target) : target;
+    const localBase = options.local || "";
+    const webpLocal = wantWebp && localBase ? toWebpPath(localBase) : localBase;
+
+    if (wantWebp && existsSync(webpTarget)) return webpLocal;
+    if (!wantWebp && existsSync(target)) return localBase;
+
     const headers = { "user-agent": syncUserAgent };
     let safeDetail = "";
     try {
@@ -67,13 +78,36 @@ const client = {
     }
     const response = await fetch(sourceUrl, { headers });
     if (!response.ok) throw new Error("Media download failed: " + response.status + safeDetail);
+    const rawBuffer = Buffer.from(await response.arrayBuffer());
+
+    if (wantWebp) {
+      const webpBuffer = await convertBufferToWebp(rawBuffer, { quality: webpQuality });
+      if (webpBuffer && webpBuffer.length > 0) {
+        mkdirSync(dirname(webpTarget), { recursive: true });
+        writeFileSync(webpTarget, webpBuffer);
+        webpStats.converted += 1;
+        webpStats.beforeBytes += rawBuffer.length;
+        webpStats.afterBytes += webpBuffer.length;
+        return webpLocal;
+      }
+    }
+
     mkdirSync(dirname(target), { recursive: true });
-    writeFileSync(target, Buffer.from(await response.arrayBuffer()));
+    writeFileSync(target, rawBuffer);
+    return localBase;
   },
 };
 try {
   const result = await writeSnapshot(client, root);
   console.log("snapshot", result);
+  if (webpStats.converted > 0) {
+    const savedPct = webpStats.beforeBytes > 0
+      ? Math.round((1 - webpStats.afterBytes / webpStats.beforeBytes) * 100)
+      : 0;
+    console.log(
+      `webp: converted ${webpStats.converted} images (${(webpStats.beforeBytes / 1024).toFixed(1)} KB -> ${(webpStats.afterBytes / 1024).toFixed(1)} KB, ${savedPct >= 0 ? "-" + savedPct : "+" + Math.abs(savedPct)}%)`,
+    );
+  }
 } catch (error) {
   snapshotFailed(root);
   console.error(error instanceof Error ? error.message : error);

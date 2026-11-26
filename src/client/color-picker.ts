@@ -145,6 +145,7 @@ export function applyThemeColor(hex: string, persist = false): string | null {
   root.style.setProperty("--themecolor-R", String(rgb.r));
   root.style.setProperty("--themecolor-G", String(rgb.g));
   root.style.setProperty("--themecolor-B", String(rgb.b));
+  root.style.setProperty("--themecolor-rgbstr", `${rgb.r},${rgb.g},${rgb.b}`);
   root.style.setProperty("--themecolor-H", String(hsl.h));
   root.style.setProperty("--themecolor-S", String(hsl.s));
   root.style.setProperty("--themecolor-L", String(hsl.l));
