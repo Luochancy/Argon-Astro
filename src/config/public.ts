@@ -37,6 +37,7 @@ export function toClientConfig(config: ThemeConfig): ClientConfig {
       enableUpvote: config.comments.enableUpvote,
       paginationType: config.comments.paginationType,
       showParentInfo: config.comments.showParentInfo,
+      showUa: config.comments.showUa,
       gravatarCdn: config.comments.gravatarCdn,
       captchaAjax: config.comments.captchaAjax,
     },

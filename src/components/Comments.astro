@@ -53,6 +53,11 @@ const hasBaked = Boolean(bakedCommentsHtml && bakedCommentsHtml.trim());
         <span>{isZh ? "发送评论" : "Post a Comment"}</span>
       </h2>
       <form id="argon-comment-form" data-endpoint="/api/comments" data-post-id={wpId}>
+        <input type="hidden" name="parent" value="0" />
+        <div id="argon-reply-banner" class="alert alert-secondary py-2 px-3 mb-2 d-none" role="status">
+          <span id="argon-reply-label"></span>
+          <button id="argon-reply-cancel" type="button" class="btn btn-sm btn-link p-0 ml-2">{isZh ? "取消回复" : "Cancel reply"}</button>
+        </div>
         <div class="row">
           <div class="col-md-12">
             <textarea id="post_comment_content" class="form-control form-control-alternative" name="content" required placeholder={t(lang, "commentBody")} style="height: 80px;"></textarea>

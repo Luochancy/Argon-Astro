@@ -11,6 +11,20 @@ export function articleMeta(fields, post, options = {}) {
         icon: "fa-clock-o",
         text: post.date,
       });
+    } else if (field === "edittime" && post.modifiedDate) {
+      items.push({
+        key: "edittime",
+        className: "post-meta-detail-edittime",
+        icon: "fa-pencil",
+        text: post.modifiedDate,
+      });
+    } else if (field === "views" && post.views !== undefined && post.views !== null) {
+      items.push({
+        key: "views",
+        className: "post-meta-detail-views",
+        icon: "fa-eye",
+        text: String(post.views),
+      });
     } else if (field === "categories" && post.categories && post.categories.length) {
       items.push({
         key: "categories",

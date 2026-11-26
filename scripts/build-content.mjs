@@ -51,6 +51,7 @@ function readEntry(file, kind, base) {
     sticky: Boolean(data.sticky),
     draft: Boolean(data.draft),
     wpId: typeof data.wpId === "number" ? data.wpId : null,
+    views: Number(data.views ?? 0),
     commentCount: Number(data.commentCount ?? 0),
     commentsOpen: data.commentsOpen !== undefined
       ? Boolean(data.commentsOpen)

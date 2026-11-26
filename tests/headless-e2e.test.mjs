@@ -62,7 +62,15 @@ const server = createServer((req, res) => {
         iconLink: `${origin}/`,
         menu: [{ label: "关于我", href: `${origin}/aboutme.html`, icon: "fa fa-user-o", children: [] }],
       },
-      sidebar: { authorImage: "https://cdn.invalid/avatar.png", bannerSubtitle: "--hitokoto--" },
+      sidebar: {
+        authorImage: "https://cdn.invalid/avatar.png",
+        bannerSubtitle: "--hitokoto--",
+        widgetsHtml: `<section class="widget"><a href="${origin}/archives/101.html">WP Widget Link</a></section>`,
+        extraHtml: `<div class="wp-extra-widget">Extra Siteinfo</div>`,
+      },
+      article: {
+        meta: ["time", "edittime", "views", "categories", "comments"],
+      },
       friendLinks: [{ name: "Ext", url: "https://ext.example", avatar: "https://cdn.invalid/friend.png" }],
       // Attempt to override comments.provider — must be ignored by compile-config.mjs.
       comments: { provider: "giscus" },
@@ -88,6 +96,7 @@ const server = createServer((req, res) => {
           passwordProtected: false,
           featuredMediaId: 10,
           featuredMediaUrl: `${origin}/wp-content/uploads/2026/11/hero.png`,
+          views: 128,
           commentCount: 1,
           comments: [{ id: 1, author: "Alice", content: "Hello from WP", upvotes: 2 }],
           raw: [
@@ -207,9 +216,27 @@ try {
   const postHtml = readFileSync(postFile, "utf8");
   assert.match(postHtml, /\/media\/wp\/10-hero\.png/);
   assert.match(postHtml, /collapse-block/);
+  assert.match(postHtml, /data-wp-id="101"/);
+  assert.match(postHtml, /data-views-post-id="101">128</);
+  assert.match(postHtml, /post-meta-detail-edittime/);
+  assert.match(postHtml, /id="blog_categories"/);
+  assert.match(postHtml, /id="blog_tags"/);
+  assert.match(postHtml, /WP Widget Link/);
+  assert.match(postHtml, /Extra Siteinfo/);
   assert.equal(postHtml.includes(wpUrl), false);
   assert.equal(existsSync(join(root, "public/media/wp/10-hero.png")), true);
   assert.equal(existsSync(join(root, "dist/archives/101.md")), true);
+
+  // Verify date archive pages (/archives/date/2026/ and /archives/date/2026/11/) were emitted.
+  const yearArchive = readFileSync(join(root, "dist/archives/date/2026/index.html"), "utf8");
+  assert.match(yearArchive, /Headless Gutenberg Post/);
+  const monthArchive = readFileSync(join(root, "dist/archives/date/2026/11/index.html"), "utf8");
+  assert.match(monthArchive, /Headless Gutenberg Post/);
+
+  // Verify full-text search index includes public post body and excludes locked post body.
+  const searchHtml = readFileSync(join(root, "dist/search/index.html"), "utf8");
+  assert.match(searchHtml, /Inner shortcode/);
+  assert.equal(searchHtml.includes("TOP_SECRET_SHOULD_NOT_LEAK"), false);
 
   // Verify WordPress .html page emitted as a real file with friendlinks shortcode + comments form.
   const aboutFile = join(root, "dist/aboutme.html");

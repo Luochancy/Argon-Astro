@@ -12,13 +12,17 @@ const isZh = lang.toLowerCase().startsWith("zh");
 const title = config.sidebar.bannerTitle || config.site.title;
 const author = config.sidebar.authorName || config.site.title;
 const announcementHtml = renderRichMarkdown(config.sidebar.announcement);
-const widgets = renderWidgets(config.sidebar.widgets);
+const widgets = config.sidebar.widgetsHtml || renderWidgets(config.sidebar.widgets);
+const extraHtml = config.sidebar.extraHtml || "";
+const rightWidgetsHtml = config.sidebar.rightWidgetsHtml || "";
 const hasMultipleTabs = Boolean(catalog || widgets);
 
 const posts = publishedPosts();
 const postCount = posts.length;
-const categoryCount = termCounts(posts, "categories").size;
-const tagCount = termCounts(posts, "tags").size;
+const categoryEntries = [...termCounts(posts, "categories").entries()].sort((a, b) => b[1] - a[1]);
+const tagEntries = [...termCounts(posts, "tags").entries()].sort((a, b) => b[1] - a[1]);
+const categoryCount = categoryEntries.length;
+const tagCount = tagEntries.length;
 
 const DEFAULT_AVATAR =
   "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiIHZpZXdCb3g9IjAgMCAxMDAgMTAwIiB4bWw6c3BhY2U9InByZXNlcnZlIj48cmVjdCBmaWxsPSIjNUU3MkU0MjIiIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIi8+PGc+PGcgb3BhY2l0eT0iMC4zIj48cGF0aCBmaWxsPSIjNUU3MkU0IiBkPSJNNzQuMzksMzIuODZjLTAuOTgtMS43LTMuMzktMy4wOS01LjM1LTMuMDlINDUuNjJjLTEuOTYsMC00LjM3LDEuMzktNS4zNSwzLjA5TDI4LjU3LDUzLjE1Yy0wLjk4LDEuNy0wLjk4LDQuNDgsMCw2LjE3bDExLjcxLDIwLjI5YzAuOTgsMS43LDMuMzksMy4wOSw1LjM1LDMuMDloMjMuNDNjMS45NiwwLDQuMzctMS4zOSw1LjM1LTMuMDlMODYuMSw1OS4zMmMwLjk4LTEuNywwLjk4LTQuNDgsMC02LjE3TDc0LjM5LDMyLjg2eiIvPjwvZz48ZyBvcGFjaXR5PSIwLjgiPjxwYXRoIGZpbGw9IiM1RTcyRTQiIGQ9Ik02Mi4wNCwyMC4zOWMtMC45OC0xLjctMy4zOS0zLjA5LTUuMzUtMy4wOUgzMS43M2MtMS45NiwwLTQuMzcsMS4zOS01LjM1LDMuMDlMMTMuOSw0Mi4wMWMtMC45OCwxLjctMC45OCw0LjQ4LDAsNi4xN2wxMi40OSwyMS42MmMwLjk4LDEuNywzLjM5LDMuMDksNS4zNSwzLjA5aDI0Ljk3YzEuOTYsMCw0LjM3LTEuMzksNS4zNS0zLjA5bDEyLjQ5LTIxLjYyYzAuOTgtMS43LDAuOTgtNC40OCwwLTYuMTdMNjIuMDQsMjAuMzl6Ii8+PC9nPjwvZz48L3N2Zz4=";
@@ -137,13 +141,13 @@ const isMenuCurrent = (href: string, children: { href: string }[] = []) => {
                 </a>
               </div>
               <div class="site-state-item site-state-categories">
-                <a href={archivesHref}>
+                <a href="#blog_categories" data-argon-modal="blog_categories" no-pjax>
                   <span class="site-state-item-count" data-count="categories">{categoryCount}</span>
                   <span class="site-state-item-name">{t(lang, "categories")}</span>
                 </a>
               </div>
               <div class="site-state-item site-state-tags">
-                <a href="/tags/">
+                <a href="#blog_tags" data-argon-modal="blog_tags" no-pjax>
                   <span class="site-state-item-count" data-count="tags">{tagCount}</span>
                   <span class="site-state-item-name">{t(lang, "tags")}</span>
                 </a>
@@ -175,6 +179,9 @@ const isMenuCurrent = (href: string, children: { href: string }[] = []) => {
             ) : (
               <div style="height: 20px;"></div>
             )}
+            {extraHtml && (
+              <div id="leftbar_siteinfo_extra_tools" set:html={extraHtml}></div>
+            )}
           </div>
           {widgets && (
             <div class="tab-pane fade" id="leftbar_tab_tools" role="tabpanel" aria-labelledby="leftbar_tab_tools_btn" set:html={widgets}></div>
@@ -184,3 +191,44 @@ const isMenuCurrent = (href: string, children: { href: string }[] = []) => {
     </div>
   </div>
 </aside>
+<div class="modal fade argon-modal-backdrop" id="blog_categories" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{t(lang, "categories")}</h5>
+        <button type="button" class="close" data-argon-modal-close aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        {categoryEntries.map(([cat, count]) => (
+          <a href={"/categories/" + encodeURIComponent(cat) + "/"} class="badge badge-secondary tag">
+            {cat} <span class="tag-num">{count}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade argon-modal-backdrop" id="blog_tags" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{t(lang, "tags")}</h5>
+        <button type="button" class="close" data-argon-modal-close aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        {tagEntries.map(([tag, count]) => (
+          <a href={"/tags/" + encodeURIComponent(tag) + "/"} class="badge badge-secondary tag">
+            {tag} <span class="tag-num">{count}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>
+{config.appearance.layout === "triple" && rightWidgetsHtml && (
+  <aside id="rightbar" class="rightbar widget-area" role="complementary" set:html={rightWidgetsHtml}></aside>
+)}

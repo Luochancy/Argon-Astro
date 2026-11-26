@@ -105,7 +105,12 @@ export function bindPasswordPost(onUnlocked: () => void, signal?: AbortSignal): 
         body: JSON.stringify({ id: postId, password }),
       });
       if (!response.ok) {
-        if (!silent) showError(response.status === 403 ? "密码错误，请重试。" : "当前静态部署未启用在线解密接口。");
+        let msg = response.status === 403 ? "密码错误，请重试。" : "当前静态部署未启用在线解密接口。";
+        try {
+          const err = (await response.json()) as { error?: string };
+          if (err.error) msg = err.error;
+        } catch { /* ignore */ }
+        if (!silent) showError(msg);
         return false;
       }
       const data = (await response.json()) as { html?: string };
@@ -113,6 +118,7 @@ export function bindPasswordPost(onUnlocked: () => void, signal?: AbortSignal): 
         if (!silent) showError("未能获取文章正文。");
         return false;
       }
+      try { sessionStorage.setItem(storageKey, password); } catch { /* ignore */ }
       reveal(data.html);
       return true;
     } catch {
@@ -122,8 +128,10 @@ export function bindPasswordPost(onUnlocked: () => void, signal?: AbortSignal): 
   };
 
   // Auto-unlock if the visitor already entered the valid password in this session.
-  const cached = sessionStorage.getItem(storageKey);
-  if (cached && mode === "local") {
+  const cached = (() => {
+    try { return sessionStorage.getItem(storageKey); } catch { return null; }
+  })();
+  if (cached) {
     void unlockWith(cached, true);
   }
 

@@ -3,6 +3,7 @@ import rawEntries from "../../generated/entries.json";
 export interface EntryData {
   title: string;
   date: Date;
+  modifiedDate?: Date;
   description: string;
   permalink: string;
   tags: string[];
@@ -11,6 +12,7 @@ export interface EntryData {
   sticky: boolean;
   draft: boolean;
   wpId?: number;
+  views: number;
   commentCount: number;
   commentsOpen: boolean;
   upvotes: number;
@@ -38,6 +40,7 @@ interface RawEntry {
   kind: ContentEntry["kind"];
   title: string;
   date: string;
+  modifiedDate?: string;
   description: string;
   permalink?: string;
   tags: string[];
@@ -46,6 +49,7 @@ interface RawEntry {
   sticky: boolean;
   draft: boolean;
   wpId: number | null;
+  views?: number;
   commentCount: number;
   commentsOpen?: boolean;
   upvotes?: number;
@@ -67,6 +71,7 @@ function loadRaw(): ContentEntry[] {
     data: {
       title: entry.title,
       date: new Date(entry.date),
+      modifiedDate: entry.modifiedDate ? new Date(entry.modifiedDate) : undefined,
       description: entry.description,
       permalink: entry.permalink || "",
       tags: entry.tags,
@@ -75,6 +80,7 @@ function loadRaw(): ContentEntry[] {
       sticky: entry.sticky,
       draft: entry.draft,
       wpId: entry.wpId ?? undefined,
+      views: Number(entry.views ?? 0),
       commentCount: entry.commentCount,
       commentsOpen: entry.commentsOpen !== undefined
         ? Boolean(entry.commentsOpen)

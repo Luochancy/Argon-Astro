@@ -11,12 +11,54 @@ export function bindSidebar(signal?: AbortSignal): void {
   document.addEventListener(
     "keydown",
     (event) => {
-      if (event.key === "Escape" && root.classList.contains("leftbar-opened")) {
-        close();
+      if (event.key === "Escape") {
+        if (root.classList.contains("leftbar-opened")) close();
+        document.querySelectorAll<HTMLElement>(".argon-modal-backdrop.show").forEach((modal) => {
+          modal.classList.remove("show");
+          modal.setAttribute("aria-hidden", "true");
+        });
+        document.body.classList.remove("argon-modal-open");
       }
     },
     { signal },
   );
+
+  // Bind upstream Argon #blog_categories / #blog_tags modal dialogs.
+  document.querySelectorAll<HTMLElement>("[data-argon-modal]").forEach((trigger) => {
+    trigger.addEventListener(
+      "click",
+      (event) => {
+        event.preventDefault();
+        const id = trigger.dataset.argonModal;
+        if (!id) return;
+        const modal = document.getElementById(id);
+        if (!modal) return;
+        close();
+        modal.classList.add("show");
+        modal.setAttribute("aria-hidden", "false");
+        document.body.classList.add("argon-modal-open");
+      },
+      { signal },
+    );
+  });
+
+  document.querySelectorAll<HTMLElement>(".argon-modal-backdrop").forEach((modal) => {
+    const closeModal = () => {
+      modal.classList.remove("show");
+      modal.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("argon-modal-open");
+    };
+    modal.addEventListener(
+      "click",
+      (event) => {
+        if (event.target === modal) closeModal();
+      },
+      { signal },
+    );
+    modal.querySelectorAll<HTMLElement>("[data-argon-modal-close], a[href]").forEach((btn) => {
+      btn.addEventListener("click", closeModal, { signal });
+    });
+  });
 
   // Auto-close mobile drawer when clicking sidebar navigation links.
   document

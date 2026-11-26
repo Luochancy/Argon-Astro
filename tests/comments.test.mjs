@@ -39,6 +39,7 @@ const ok = await handleComments(new Request("https://blog.example/api/comments?p
     private: false,
     markdown: true,
     upvotes: 5,
+    editHistory: [{ content: "old", date: "2026-11-10T00:00:00Z" }],
   }, {
     id: 2,
     parent: 1,
@@ -59,9 +60,24 @@ const list = await ok.json();
 assert.equal(list[0].pinned, true);
 assert.equal(list[0].markdown, true);
 assert.equal(list[0].upvotes, 5);
+assert.equal(list[0].editHistoryCount, 1);
 assert.equal(list[0].parentAuthor, "Root");
 assert.equal(list[1].private, true);
 assert.equal(list[1].content, "", "private comment content must be masked");
+
+// GET comment edit history
+let histUrl = "";
+const histRes = await handleComments(new Request("https://blog.example/api/comments?history=1"), {
+  WP_URL: secretHost,
+  WP_USER: "editor",
+  WP_APP_PASSWORD: "app-pass",
+}, async (url) => {
+  histUrl = url;
+  return new Response(JSON.stringify({ id: 1, history: [{ content: "v1", date: "2026-11-10T00:00:00Z" }] }));
+});
+assert.equal(histRes.status, 200);
+assert.equal(histUrl, secretHost + "/wp-json/argon-astro/v1/comments/history?id=1");
+assert.equal((await histRes.json()).history[0].content, "v1");
 
 // POST with QQ number + markdown + private
 let postBody = null;

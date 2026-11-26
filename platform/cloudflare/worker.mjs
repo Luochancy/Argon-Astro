@@ -5,6 +5,8 @@
 import { handleComments } from "../../src/lib/comments/handler.mjs";
 import { handleCommentUpvote } from "../../src/lib/comments/upvote.mjs";
 import { handleUpvote } from "../../src/lib/shuoshuo/upvote.mjs";
+import { handlePostUnlock } from "../../src/lib/wordpress/post-unlock.mjs";
+import { handleViews } from "../../src/lib/wordpress/views.mjs";
 import { handleDeployHook } from "../../src/lib/ci/receiver.mjs";
 import {
   acceptsMarkdown,
@@ -23,6 +25,58 @@ let cachedTaxonomyMap = null;
 
 function normalizeApiPath(pathname) {
   return pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+}
+
+async function handleGithubRepo(request, url) {
+  if (request.method !== "GET") {
+    return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
+      status: 405,
+      headers: { "content-type": "application/json; charset=utf-8" },
+    });
+  }
+  const author = String(url.searchParams.get("author") || "").trim();
+  const project = String(url.searchParams.get("project") || "").trim();
+  if (!/^[a-zA-Z0-9._-]+$/.test(author) || !/^[a-zA-Z0-9._-]+$/.test(project)) {
+    return new Response(JSON.stringify({ error: "Invalid repository" }), {
+      status: 400,
+      headers: { "content-type": "application/json; charset=utf-8" },
+    });
+  }
+  try {
+    const res = await fetch(`https://api.github.com/repos/${author}/${project}`, {
+      headers: {
+        accept: "application/vnd.github+json",
+        "user-agent": "Argon-Astro-Worker/1.0",
+      },
+      cf: { cacheTtl: 21600, cacheEverything: true },
+    });
+    if (!res.ok) {
+      return new Response(JSON.stringify({ error: "GitHub API unavailable" }), {
+        status: 502,
+        headers: { "content-type": "application/json; charset=utf-8" },
+      });
+    }
+    const data = await res.json();
+    return new Response(
+      JSON.stringify({
+        description: String(data?.description || ""),
+        stars: Number(data?.stargazers_count ?? 0),
+        forks: Number(data?.forks_count ?? 0),
+      }),
+      {
+        status: 200,
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "cache-control": "public, max-age=3600, s-maxage=21600",
+        },
+      },
+    );
+  } catch {
+    return new Response(JSON.stringify({ error: "GitHub API unavailable" }), {
+      status: 502,
+      headers: { "content-type": "application/json; charset=utf-8" },
+    });
+  }
 }
 
 async function handleBingWallpaper(request) {
@@ -152,6 +206,15 @@ export default {
     if (path === "/api/shuoshuo-upvote") {
       return handleUpvote(request, env);
     }
+    if (path === "/api/post-unlock") {
+      return handlePostUnlock(request, env);
+    }
+    if (path === "/api/views") {
+      return handleViews(request, env);
+    }
+    if (path === "/api/github") {
+      return handleGithubRepo(request, url);
+    }
     if (path === "/api/deploy") {
       return handleDeployHook(request, env, seenNonces);
     }
@@ -166,6 +229,19 @@ export default {
     }
 
     const method = request.method.toUpperCase();
+
+    // Legacy WordPress RSS feed aliases (/feed, /feed/, /rss, /rss/) -> /feed.xml.
+    if ((method === "GET" || method === "HEAD") && (path === "/feed" || path === "/rss") && env.ASSETS) {
+      const feedRes = await env.ASSETS.fetch(new Request(new URL("/feed.xml", url.origin).toString(), { method }));
+      if (feedRes.ok) {
+        const headers = new Headers(feedRes.headers);
+        headers.set("content-type", "application/rss+xml; charset=utf-8");
+        return new Response(method === "HEAD" ? null : feedRes.body, {
+          status: 200,
+          headers,
+        });
+      }
+    }
 
     // 1. Runtime Serverless injection/override for /robots.txt, /llms.txt, /llms-full.txt.
     if (method === "GET" || method === "HEAD") {

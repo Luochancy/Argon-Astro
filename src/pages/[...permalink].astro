@@ -127,7 +127,7 @@ const jsonLd = entry.kind === "post"
 {entry.kind === "post" ? (
   <Base title={entry.data.title} description={entry.data.description} image={entry.data.cover} catalog markdownUrl={markdownUrl} jsonLd={jsonLd}>
     {bannerThumb && <style set:html={bannerThumb}></style>}
-    <article class="post post-full card bg-white shadow-sm border-0" id={"post-" + entry.id}>
+    <article class="post post-full card bg-white shadow-sm border-0" id={"post-" + entry.id} data-wp-id={entry.data.wpId}>
       <header class:list={["post-header text-center", { "post-header-with-thumbnail": hasHeaderThumb }]}>
         {hasHeaderThumb && <img class="post-thumbnail" src={entry.data.cover} alt="" />}
         {hasHeaderThumb ? (

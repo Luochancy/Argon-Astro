@@ -89,6 +89,9 @@ export interface ThemeConfig {
     authorLinks: AuthorLink[];
     friendLinks?: AuthorLink[];
     widgets: { type: string; title: string; html?: string; items?: { label: string; href: string }[] }[];
+    widgetsHtml?: string;
+    extraHtml?: string;
+    rightWidgetsHtml?: string;
   };
   article: {
     listLayout: "1" | "2" | "3";
@@ -235,6 +238,7 @@ export interface ClientConfig {
     enableUpvote: boolean;
     paginationType: "page" | "feed";
     showParentInfo: boolean;
+    showUa: boolean;
     gravatarCdn: string;
     captchaAjax: boolean;
   };

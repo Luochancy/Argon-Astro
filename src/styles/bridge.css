@@ -44,3 +44,42 @@
 #leftbar_catalog .index-subItem-box.open {
   display: block;
 }
+
+/* Comment emotion keyboard toggle and clean modal overlays. */
+#emotion_keyboard {
+  display: none;
+  margin-top: 8px;
+}
+
+#emotion_keyboard.emotion-keyboard-open {
+  display: block;
+}
+
+.argon-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1050;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.argon-modal-backdrop.show {
+  display: flex;
+}
+
+.argon-modal-backdrop .modal-dialog {
+  width: 100%;
+  max-width: 520px;
+  margin: 0;
+}
+
+.argon-modal-backdrop .modal-body {
+  max-height: 65vh;
+  overflow-y: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

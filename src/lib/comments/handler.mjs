@@ -41,6 +41,23 @@ export async function handleComments(request, env, fetchImpl = fetch) {
     const issued = issueCaptcha(env.ARGON_CAPTCHA_SECRET);
     return json(200, { question: issued.question, token: issued.token });
   }
+  if (request.method === "GET" && url.searchParams.get("history")) {
+    const cid = url.searchParams.get("history");
+    if (!cid || !/^[0-9]+$/.test(cid)) return json(400, { error: "评论编号无效。" });
+    const response = await fetchImpl(endpoint + "/history?id=" + cid, {
+      headers: { authorization: authHeader(env), accept: "application/json", "user-agent": WORKER_USER_AGENT },
+    });
+    if (response.status === 404) return json(404, { error: "评论不存在。" });
+    if (!response.ok) return json(502, { error: "无法获取编辑记录。" });
+    const data = await response.json();
+    const history = Array.isArray(data?.history)
+      ? data.history.map((entry) => ({
+          content: String(entry?.content || ""),
+          date: String(entry?.date || entry?.time || ""),
+        }))
+      : [];
+    return json(200, { id: Number(cid), history });
+  }
   if (request.method === "GET") {
     const post = url.searchParams.get("post");
     if (!post || !/^[0-9]+$/.test(post)) return json(400, { error: "文章编号无效。" });
@@ -64,6 +81,7 @@ export async function handleComments(request, env, fetchImpl = fetch) {
       userAgent: String(item.userAgent || ""),
       qq: QQ_PATTERN.test(String(item.qq || "")) ? String(item.qq) : "",
       gravatar: /^[a-f0-9]{32}$/.test(String(item.gravatar || "")) ? String(item.gravatar) : "",
+      editHistoryCount: Array.isArray(item.editHistory) ? item.editHistory.length : 0,
     })));
   }
   if (request.method !== "POST") return json(405, { error: "方法不被允许。" });
@@ -136,6 +154,7 @@ async function editComment(body, env, fetchImpl) {
     headers: {
       authorization: authHeader(env),
       "content-type": "application/json",
+      "user-agent": WORKER_USER_AGENT,
     },
     body: JSON.stringify({ id, email, content }),
   });
@@ -160,6 +179,7 @@ async function pinComment(body, env, fetchImpl) {
     headers: {
       authorization: authHeader(env),
       "content-type": "application/json",
+      "user-agent": WORKER_USER_AGENT,
     },
     body: JSON.stringify(payload),
   });

@@ -7,6 +7,7 @@ import { bindDarkmode } from "./darkmode";
 import { bindDonate } from "./donate";
 import { bindFab } from "./fab";
 import { bindFold } from "./fold";
+import { bindGithubCards } from "./github-cards";
 import { bindHeadroom } from "./headroom";
 import { bindHighlight } from "./highlight";
 import { bindLazyload } from "./lazyload";
@@ -21,6 +22,7 @@ import { bindShare } from "./share";
 import { bindSidebar } from "./sidebar";
 import { bindPageTransition, markArticleEntryTransition } from "./transition";
 import { bindUpvote } from "./upvote";
+import { bindViews } from "./views";
 import { bindWaterflow } from "./waterflow";
 import { bindZoomify } from "./zoomify";
 import type { ClientConfig } from "./types";
@@ -197,6 +199,8 @@ export function boot(config: ClientConfig): void {
   );
 
   bindUpvote(config.upvote.mode, signal);
+  bindViews(config.upvote.mode, signal);
+  bindGithubCards(signal);
   bindAgentTools(config.agent, signal);
   bindFold(config.motion.foldLongComments, config.motion.foldLongShuoshuo, signal);
   bindBanner(config.banner.typing, config.banner.typingInterval, signal);
@@ -204,6 +208,7 @@ export function boot(config: ClientConfig): void {
   bindPasswordPost(() => {
     bindBlocks(signal);
     bindCatalog(signal);
+    bindGithubCards(signal);
     if (config.motion.fancybox) bindLightbox(signal);
     void bindHighlight(
       {

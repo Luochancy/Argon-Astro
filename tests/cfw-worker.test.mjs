@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import worker from "../platform/cloudflare/worker.mjs";
+import { handlePostUnlock } from "../src/lib/wordpress/post-unlock.mjs";
+import { handleViews } from "../src/lib/wordpress/views.mjs";
 import { acceptsMarkdown, resolveNegotiatedMarkdownPath, estimateMarkdownTokens } from "../src/lib/agent/negotiate.mjs";
 
 // 0. Unit tests for RFC 9110 Accept: text/markdown parsing
@@ -76,6 +78,12 @@ const mockAssets = {
       return new Response("<!doctype html><html><body>TAXONOMY</body></html>", {
         status: 200,
         headers: { "content-type": "text/html; charset=utf-8" },
+      });
+    }
+    if (p === "/feed.xml") {
+      return new Response('<?xml version="1.0"?><rss><channel><title>Argon</title></channel></rss>', {
+        status: 200,
+        headers: { "content-type": "application/xml; charset=utf-8" },
       });
     }
     return new Response("Not Found", { status: 404 });
@@ -200,6 +208,78 @@ for (const alias of [
   const res = await worker.fetch(new Request("https://blog.example" + alias), { ASSETS: mockAssets });
   assert.equal(res.status, 200, `taxonomy alias ${alias} should return 200`);
   assert.match(await res.text(), /TAXONOMY/);
+}
+
+// 14. /api/post-unlock, /api/views, /api/github, and legacy /feed & /rss routes
+const unlockMissing = await worker.fetch(new Request("https://blog.example/api/post-unlock", { method: "POST", body: "{}" }), {});
+assert.equal(unlockMissing.status, 503);
+assert.equal((await unlockMissing.text()).includes("wp-json"), false);
+
+const unlockOk = await handlePostUnlock(
+  new Request("https://blog.example/api/post-unlock", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ id: 102, password: "open" }),
+  }),
+  { WP_URL: "https://cms.secret", WP_USER: "bot", WP_APP_PASSWORD: "pw" },
+  async (url, init) => {
+    assert.equal(url, "https://cms.secret/wp-json/argon-astro/v1/post-unlock");
+    assert.deepEqual(JSON.parse(init.body), { id: 102, password: "open" });
+    return new Response(JSON.stringify({ id: 102, title: "Secret", html: "<p>Unlocked!</p>" }), { status: 200 });
+  },
+);
+assert.equal(unlockOk.status, 200);
+assert.equal((await unlockOk.json()).html, "<p>Unlocked!</p>");
+
+const unlockDeny = await handlePostUnlock(
+  new Request("https://blog.example/api/post-unlock", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ id: 102, password: "wrong" }),
+  }),
+  { WP_URL: "https://cms.secret", WP_USER: "bot", WP_APP_PASSWORD: "pw" },
+  async () => new Response(JSON.stringify({ error: "wrong" }), { status: 403 }),
+);
+assert.equal(unlockDeny.status, 403);
+
+const viewsMissing = await worker.fetch(new Request("https://blog.example/api/views?id=101"), {});
+assert.equal(viewsMissing.status, 503);
+
+const viewsGet = await handleViews(
+  new Request("https://blog.example/api/views?id=101"),
+  { WP_URL: "https://cms.secret", WP_USER: "bot", WP_APP_PASSWORD: "pw" },
+  async (url) => {
+    assert.equal(url, "https://cms.secret/wp-json/argon-astro/v1/views?id=101");
+    return new Response(JSON.stringify({ id: 101, views: 42 }), { status: 200 });
+  },
+);
+assert.equal(viewsGet.status, 200);
+assert.equal((await viewsGet.json()).views, 42);
+
+const viewsPost = await handleViews(
+  new Request("https://blog.example/api/views", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ id: 101 }),
+  }),
+  { WP_URL: "https://cms.secret", WP_USER: "bot", WP_APP_PASSWORD: "pw" },
+  async (url, init) => {
+    assert.equal(url, "https://cms.secret/wp-json/argon-astro/v1/views");
+    assert.deepEqual(JSON.parse(init.body), { id: 101 });
+    return new Response(JSON.stringify({ id: 101, views: 43 }), { status: 200 });
+  },
+);
+assert.equal(viewsPost.status, 200);
+assert.equal((await viewsPost.json()).views, 43);
+
+const ghBad = await worker.fetch(new Request("https://blog.example/api/github?author=../bad&project=repo"), {});
+assert.equal(ghBad.status, 400);
+
+for (const feedPath of ["/feed", "/feed/", "/rss", "/rss/"]) {
+  const feedRes = await worker.fetch(new Request("https://blog.example" + feedPath), { ASSETS: mockAssets });
+  assert.equal(feedRes.status, 200, `${feedPath} should serve /feed.xml`);
+  assert.match(feedRes.headers.get("content-type") || "", /application\/rss\+xml/);
+  assert.match(await feedRes.text(), /<rss>/);
 }
 
 console.log("cfw worker ok");

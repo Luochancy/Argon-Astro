@@ -225,10 +225,18 @@ export async function writeSnapshot(client, root) {
     if (!origin) return htmlText;
     const prefix = escapeRegExp(origin);
     return String(htmlText || "").replace(
-      new RegExp(`(\\bhref=["'])${prefix}(/[^"'<>\\s]*|(?=["']))`, "gi"),
+      new RegExp(`(\\b(?:href|action)=["'])${prefix}(/[^"'<>\\s]*|(?=["']))`, "gi"),
       (_, attrPrefix, relPath) => attrPrefix + (relPath || "/"),
     );
   };
+
+  if (remote.sidebar) {
+    for (const key of ["widgetsHtml", "extraHtml", "rightWidgetsHtml"]) {
+      if (typeof remote.sidebar[key] === "string" && remote.sidebar[key]) {
+        remote.sidebar[key] = rewriteOriginHrefs(rewriteMediaUrls(remote.sidebar[key], map));
+      }
+    }
+  }
 
   const ctx = createContext({
     rewriteUrl,
@@ -277,12 +285,14 @@ export async function writeSnapshot(client, root) {
         categories: item.categories || [],
         sticky: Boolean(item.sticky),
         wpId: item.id,
+        views: Number(item.views || 0),
         upvotes: Number(item.upvotes || 0),
         commentCount: item.commentCount || 0,
         commentsOpen: item.commentsOpen !== undefined
           ? Boolean(item.commentsOpen)
           : (kind !== "pages" || item.template === "message"),
         comments: Array.isArray(item.comments) ? item.comments : [],
+        passwordHint: item.passwordHint || "",
         mood: item.mood || "",
         images: (item.images || [])
           .map((src) => rewriteUrl(src))

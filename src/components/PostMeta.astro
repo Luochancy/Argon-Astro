@@ -15,11 +15,14 @@ const { post, config } = Astro.props;
 const lang = config.site.language;
 const isZh = lang.toLowerCase().startsWith("zh");
 const date = formatDate(post.data.date, config.site.dateFormat);
+const modifiedDate = post.data.modifiedDate ? formatDate(post.data.modifiedDate, config.site.dateFormat) : "";
 
 const meta = articleMeta(
   config.article.meta,
   {
     date,
+    modifiedDate,
+    views: config.source === "wordpress" || post.data.views > 0 ? post.data.views : undefined,
     categories: config.article.hideCategories ? [] : post.data.categories,
     commentCount: post.data.commentCount,
   },
@@ -66,6 +69,18 @@ const reading = showReading
         <div class="post-meta-detail post-meta-detail-time">
           <i class="fa fa-clock-o" aria-hidden="true"></i>
           <time datetime={post.data.date.toISOString()} title={date}>{entry.item.text}</time>
+        </div>
+      )}
+      {entry.kind === "meta" && entry.item.key === "edittime" && (
+        <div class="post-meta-detail post-meta-detail-edittime">
+          <i class="fa fa-pencil" aria-hidden="true"></i>
+          <time datetime={post.data.modifiedDate?.toISOString() || ""} title={modifiedDate}>{entry.item.text}</time>
+        </div>
+      )}
+      {entry.kind === "meta" && entry.item.key === "views" && (
+        <div class="post-meta-detail post-meta-detail-views">
+          <i class="fa fa-eye" aria-hidden="true"></i>
+          <span data-views-post-id={post.data.wpId}>{entry.item.text}</span>
         </div>
       )}
       {entry.kind === "meta" && entry.item.key === "categories" && (

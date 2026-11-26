@@ -1,0 +1,64 @@
+---
+import Base from "../../../layouts/Base.astro";
+import PostCard from "../../../components/PostCard.astro";
+import { loadThemeConfig } from "../../../config/load";
+import { publishedPosts, type PostEntry } from "../../../lib/content/queries";
+import { excerpt } from "../../../lib/reading";
+import { previewText } from "../../../lib/preview-text.mjs";
+
+export function getStaticPaths() {
+  const posts = publishedPosts();
+  const groups = new Map<string, { label: string; posts: PostEntry[] }>();
+
+  for (const post of posts) {
+    const d = post.data.date;
+    if (Number.isNaN(d.getTime())) continue;
+    const year = String(d.getFullYear());
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+
+    if (!groups.has(year)) groups.set(year, { label: `${year}`, posts: [] });
+    groups.get(year)!.posts.push(post);
+
+    const ym = `${year}/${month}`;
+    if (!groups.has(ym)) groups.set(ym, { label: `${year}-${month}`, posts: [] });
+    groups.get(ym)!.posts.push(post);
+  }
+
+  return [...groups.entries()].map(([date, info]) => ({
+    params: { date },
+    props: { label: info.label, posts: info.posts },
+  }));
+}
+
+interface Props {
+  label: string;
+  posts: PostEntry[];
+}
+const { label, posts } = Astro.props;
+const config = loadThemeConfig();
+const isZh = config.site.language.toLowerCase().startsWith("zh");
+const parts = label.split("-");
+const displayLabel = isZh
+  ? (parts.length === 2 ? `${parts[0]} 年 ${Number(parts[1])} 月` : `${parts[0]} 年`)
+  : label;
+---
+<Base title={displayLabel}>
+  <div slot="page-info" class="page-information-card-container">
+    <div class="page-information-card card bg-gradient-secondary shadow-lg border-0">
+      <div class="card-body">
+        <h3 class="text-black">{displayLabel}</h3>
+        <p class="text-black mt-3 mb-0 opacity-8">
+          <i class="fa fa-calendar-o mr-1"></i>
+          {posts.length} {isZh ? "篇文章" : "posts"}
+        </p>
+      </div>
+    </div>
+  </div>
+  {posts.map((post) => (
+    <PostCard
+      post={post}
+      config={config}
+      summary={excerpt(previewText(post.data.description ?? "", config.article.hideShortcodeInPreview), config.article.trimWords)}
+    />
+  ))}
+</Base>
