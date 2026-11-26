@@ -148,6 +148,9 @@ export async function writeSnapshot(client, root) {
   delete remote.source;
   delete remote.media;
 
+  if (remote.site && shouldMirrorUrl(remote.site.icon, origin)) {
+    remote.site.icon = registerMedia(0, remote.site.icon);
+  }
   if (remote.banner && shouldMirrorUrl(remote.banner.backgroundUrl, origin)) {
     remote.banner.backgroundUrl = registerMedia(0, remote.banner.backgroundUrl);
   }

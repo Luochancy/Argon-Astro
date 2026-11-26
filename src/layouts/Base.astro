@@ -29,8 +29,11 @@ interface Props {
 const { title, description, image, home = false, catalog = false, markdownUrl, jsonLd } = Astro.props;
 const config = loadThemeConfig();
 const clientConfig = toClientConfig(config);
-const pageTitle = title ? title + " - " + config.site.title : config.site.title;
+const pageTitle = title
+  ? title + " - " + config.site.title
+  : (home && config.site.description ? config.site.title + " - " + config.site.description : config.site.title);
 const pageDescription = description || config.site.description;
+const faviconUrl = config.site.icon || config.toolbar.icon || "";
 const classes = htmlClass(config, home ? ["is-home"] : []);
 const colorStyle = themeColorStyle(config.appearance.color, config.appearance.cardRadius);
 const backgroundCss = pageBackgroundCss(config.background);
@@ -64,8 +67,17 @@ const toolbarMaskCss = config.banner.toolbarMask
     <meta property="og:description" content={pageDescription} />
     {image && <meta property="og:image" content={image} />}
     <meta name="theme-color" content={config.appearance.color} />
-    <link rel="icon" type="image/svg+xml" href="/argon/toolbar-icon.svg" />
-    <link rel="icon" href="/favicon.ico" sizes="any" />
+    {faviconUrl ? (
+      <>
+        <link rel="icon" href={faviconUrl} />
+        <link rel="apple-touch-icon" href={faviconUrl} />
+      </>
+    ) : (
+      <>
+        <link rel="icon" type="image/svg+xml" href="/argon/toolbar-icon.svg" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+      </>
+    )}
     {config.motion.pjax && <ClientRouter />}
     <link rel="preload" href="/argon/assets/vendor/font-awesome/fonts/fontawesome-webfont.woff2?v=4.7.0" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="/argon/assets/argon-core.min.css" />

@@ -1,15 +1,18 @@
 ---
 import Base from "../layouts/Base.astro";
+import { loadThemeConfig } from "../config/load";
+const config = loadThemeConfig();
+const isZh = config.site.language.toLowerCase().startsWith("zh");
 ---
 <Base title="404">
   <article class="post post-full card bg-white shadow-sm border-0 text-center">
     <header class="post-header"><span class="post-title">404</span></header>
     <div class="post-content">
-      <p>找不到页面</p>
+      <p>{isZh ? "找不到页面" : "Page not found"}</p>
       <form action="/search/" method="get">
-        <input class="form-control" name="q" type="search" aria-label="search" />
+        <input class="form-control" name="q" type="search" aria-label="search" placeholder={isZh ? "搜索站内内容..." : "Search..."} />
       </form>
-      <a href="/">Home</a>
+      <a class="btn btn-primary mt-3" href="/">{isZh ? "返回首页" : "Home"}</a>
     </div>
   </article>
 </Base>

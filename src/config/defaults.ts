@@ -9,6 +9,7 @@ export const defaultConfig: ThemeConfig = {
     url: "http://localhost:4321",
     language: "zh-CN",
     keywords: "",
+    icon: "",
     dateFormat: "YMD",
   },
   appearance: {

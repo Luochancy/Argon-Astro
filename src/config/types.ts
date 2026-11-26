@@ -34,6 +34,7 @@ export interface ThemeConfig {
     url: string;
     language: string;
     keywords: string;
+    icon?: string;
     dateFormat: "YMD" | "MDY" | "DMY";
   };
   appearance: {
