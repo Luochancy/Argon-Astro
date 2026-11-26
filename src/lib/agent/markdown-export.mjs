@@ -88,16 +88,14 @@ export function htmlToAgentMarkdown(html) {
     .trim();
 }
 
+import { entryUrl, entryMarkdownPath as resolveEntryMarkdownPath } from "../content/urls.mjs";
+
 export function entryCanonicalPath(entry) {
-  if (entry.kind === "post") return `/posts/${entry.id}/`;
-  if (entry.kind === "shuoshuo") return `/shuoshuo/${entry.id}/`;
-  return `/${entry.id}/`;
+  return entryUrl(entry);
 }
 
 export function entryMarkdownPath(entry) {
-  if (entry.kind === "post") return `/posts/${entry.id}.md`;
-  if (entry.kind === "shuoshuo") return `/shuoshuo/${entry.id}.md`;
-  return `/${entry.id}.md`;
+  return resolveEntryMarkdownPath(entry);
 }
 
 /** Render a standalone Markdown document for a single post, page, or shuoshuo entry. */

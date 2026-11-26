@@ -1,10 +1,14 @@
+import { resolveBackgroundToken } from "./content/urls.mjs";
+
 export function pageBackgroundCss(background) {
-  if (!background || !background.url) return "";
+  const url = resolveBackgroundToken(background && background.url);
+  if (!url) return "";
+  const darkUrl = resolveBackgroundToken(background && background.darkUrl);
   const opacity = Number(background.opacity);
   const safeOpacity = Number.isFinite(opacity) ? Math.min(1, Math.max(0, opacity)) : 1;
-  let css = "#content:before{content:\"\";display:block;position:fixed;inset:0;z-index:-2;background:url(" + background.url + ") center/cover no-repeat;opacity:" + safeOpacity + "}";
-  if (background.darkUrl) {
-    css += "html.darkmode #content:before{background-image:url(" + background.darkUrl + ")}";
+  let css = "#content:before{content:\"\";display:block;position:fixed;inset:0;z-index:-2;background:url(" + url + ") center/cover no-repeat;opacity:" + safeOpacity + "}";
+  if (darkUrl) {
+    css += "html.darkmode #content:before{background-image:url(" + darkUrl + ")}";
   } else {
     css += "html.darkmode #content:before{filter:brightness(.65)}";
   }

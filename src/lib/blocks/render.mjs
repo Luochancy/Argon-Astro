@@ -98,7 +98,7 @@ function renderBlock(block, ctx) {
   if (name === "list") return renderList(block, ctx);
   if (name === "list-item") return renderListItem(block, ctx);
   if (name === "preformatted" || name === "verse") return "<pre class=\"wp-block-" + name + "\">" + escapeHtml(block.attrs.content || block.innerHtml.replace(/<[^>]+>/g, "")) + "</pre>";
-  if (name === "html") return "<div class=\"wp-block-html\">" + rewriteHtml(block.attrs.content || block.innerHtml, ctx) + "</div>";
+  if (name === "html") return "<div class=\"wp-block-html\">" + rewriteHtml(renderShortcodes(block.attrs.content || block.innerHtml, ctx), ctx) + "</div>";
   if (name === "more") return "<span class=\"wp-block-more\" id=\"more-" + escapeHtml(block.attrs.customText || "") + "\"></span>";
   if (name === "navigation") return "<nav class=\"wp-block-navigation\">" + renderBlocks(block.innerBlocks, ctx) + "</nav>";
   if (name === "navigation-link") {
@@ -111,8 +111,8 @@ function renderBlock(block, ctx) {
 }
 
 function renderParagraph(block, ctx) {
-  if (block.innerHtml.trim()) return rewriteHtml(block.innerHtml, ctx);
-  if (block.attrs.content) return "<p>" + escapeHtml(block.attrs.content) + "</p>";
+  if (block.innerHtml.trim()) return rewriteHtml(renderShortcodes(block.innerHtml, ctx), ctx);
+  if (block.attrs.content) return "<p>" + renderShortcodes(escapeHtml(block.attrs.content), ctx) + "</p>";
   return "";
 }
 
@@ -226,7 +226,7 @@ function renderArgon(block, ctx) {
 
 function renderLatest(block, ctx) {
   const limit = Number(block.attrs.postsToShow || 5);
-  const items = ctx.posts.slice(0, limit).map((post) => "<li><a href=\"/posts/" + post.id + "/\">" + escapeHtml(post.title) + "</a></li>").join("");
+  const items = ctx.posts.slice(0, limit).map((post) => "<li><a href=\"" + escapeHtml(post.href || ("/posts/" + post.id + "/")) + "\">" + escapeHtml(post.title) + "</a></li>").join("");
   return "<ul class=\"wp-block-latest-posts\">" + items + "</ul>";
 }
 

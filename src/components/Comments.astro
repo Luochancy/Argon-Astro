@@ -21,18 +21,19 @@ const hasBaked = Boolean(bakedCommentsHtml && bakedCommentsHtml.trim());
 ---
 <section id="comments" class:list={["comments-area card shadow-sm border-0", { "comment-avatar-vertical-center": config.comments.avatarVcenter }]}>
   <div class="card-body">
-    {hasBaked && (
-      <>
-        <h2 class="comments-title">
-          <i class="fa fa-comments"></i>
-          {t(lang, "comments")}
-        </h2>
-        <Fragment set:html={bakedCommentsHtml} />
-      </>
+    {(hasBaked || (provider === "wordpress" && wpId)) && (
+      <h2 class="comments-title">
+        <i class="fa fa-comments"></i>
+        {t(lang, "comments")}
+      </h2>
     )}
-    {provider === "wordpress" && wpId && (
-      <div id="argon-comment-list" data-post-id={wpId}></div>
-    )}
+    {provider === "wordpress" && wpId ? (
+      <div id="argon-comment-list" data-post-id={wpId}>
+        {hasBaked && <Fragment set:html={bakedCommentsHtml} />}
+      </div>
+    ) : hasBaked ? (
+      <Fragment set:html={bakedCommentsHtml} />
+    ) : null}
     {provider === "giscus" && giscus.repo && <div class="giscus"></div>}
     {provider === "waline" && waline.serverURL && <div id="waline"></div>}
     {provider === "twikoo" && twikoo.envId && <div id="tcomment"></div>}
@@ -99,7 +100,7 @@ const hasBaked = Boolean(bakedCommentsHtml && bakedCommentsHtml.trim());
                   <div class="input-group-prepend">
                     <span class="input-group-text">
                       <i class="fa fa-key"></i>
-                      <span id="argon-captcha-question" class="ml-1"></span>
+                      <span id="argon-captcha-question" class="ml-1" style="cursor: pointer;" title={isZh ? "点击刷新验证码" : "Click to refresh captcha"}></span>
                     </span>
                   </div>
                   <input id="post_comment_captcha" class="form-control" name="captchaAnswer" inputmode="numeric" required placeholder="验证码" />

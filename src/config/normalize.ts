@@ -26,10 +26,12 @@ function menus(value: unknown, fallback: MenuItem[]): MenuItem[] {
   return value.map((item) => {
     const row = isRecord(item) ? item : {};
     const icon = typeof row.icon === "string" && row.icon.trim() ? row.icon.trim() : undefined;
+    const target = typeof row.target === "string" && row.target.trim() ? row.target.trim() : undefined;
     return {
       label: String(row.label ?? ""),
       href: String(row.href ?? "#"),
       ...(icon ? { icon } : {}),
+      ...(target ? { target } : {}),
       children: menus(row.children, []),
     };
   });
@@ -57,6 +59,13 @@ export function normalizeConfig(raw: unknown): ThemeConfig {
   merged.sidebar.menu = menus(sidebar.menu, defaultConfig.sidebar.menu);
   if (Array.isArray(sidebar.authorLinks)) {
     merged.sidebar.authorLinks = sidebar.authorLinks.map((item) => {
+      const row = isRecord(item) ? item : {};
+      const icon = typeof row.icon === "string" && row.icon.trim() ? row.icon.trim() : undefined;
+      return { label: String(row.label ?? ""), href: String(row.href ?? ""), ...(icon ? { icon } : {}) };
+    });
+  }
+  if (Array.isArray(sidebar.friendLinks)) {
+    merged.sidebar.friendLinks = sidebar.friendLinks.map((item) => {
       const row = isRecord(item) ? item : {};
       return { label: String(row.label ?? ""), href: String(row.href ?? "") };
     });

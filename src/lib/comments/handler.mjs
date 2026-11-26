@@ -19,6 +19,8 @@ function sameOrigin(request) {
   }
 }
 
+const WORKER_USER_AGENT = "Argon-Astro-Worker/1.0";
+
 function authHeader(env) {
   return "Basic " + Buffer.from(env.WP_USER + ":" + env.WP_APP_PASSWORD).toString("base64");
 }
@@ -43,7 +45,7 @@ export async function handleComments(request, env, fetchImpl = fetch) {
     const post = url.searchParams.get("post");
     if (!post || !/^[0-9]+$/.test(post)) return json(400, { error: "文章编号无效。" });
     const response = await fetchImpl(endpoint + "?post=" + post, {
-      headers: { authorization: authHeader(env), accept: "application/json" },
+      headers: { authorization: authHeader(env), accept: "application/json", "user-agent": WORKER_USER_AGENT },
     });
     if (!response.ok) return json(502, { error: "评论暂时不可用。" });
     const items = await response.json();
@@ -75,7 +77,9 @@ export async function handleComments(request, env, fetchImpl = fetch) {
   if (!Number.isInteger(postId) || postId < 1 || author.length < 1 || author.length > 40 || content.length < 1 || content.length > 2000 || !isValidContact(email)) {
     return json(400, { error: "评论内容无效。" });
   }
-  if (env.ARGON_CAPTCHA === "true" && !verifyCaptcha(env.ARGON_CAPTCHA_SECRET || "", body.captchaToken, body.captchaAnswer)) {
+  const requireCaptcha = env.ARGON_CAPTCHA === "true"
+    || (Boolean(env.ARGON_CAPTCHA_SECRET) && env.ARGON_CAPTCHA !== "false");
+  if (requireCaptcha && !verifyCaptcha(env.ARGON_CAPTCHA_SECRET || "", body.captchaToken, body.captchaAnswer)) {
     return json(400, { error: "验证码不正确。" });
   }
   const response = await fetchImpl(endpoint, {
@@ -83,6 +87,7 @@ export async function handleComments(request, env, fetchImpl = fetch) {
     headers: {
       authorization: authHeader(env),
       "content-type": "application/json",
+      "user-agent": WORKER_USER_AGENT,
     },
     body: JSON.stringify({
       postId,
@@ -96,7 +101,25 @@ export async function handleComments(request, env, fetchImpl = fetch) {
       private: Boolean(body.private),
     }),
   });
-  if (!response.ok) return json(502, { error: "评论暂时不可用。" });
+  if (!response.ok) {
+    let upstream = null;
+    try {
+      upstream = await response.json();
+    } catch {
+      upstream = null;
+    }
+    const code = upstream && typeof upstream.code === "string" ? upstream.code : "";
+    if (response.status === 409 || code === "comment_duplicate") {
+      return json(409, { error: "检测到重复评论，请勿重复提交。" });
+    }
+    if (response.status === 429 || code === "comment_flood") {
+      return json(429, { error: "评论提交过于频繁，请稍后再试。" });
+    }
+    if (response.status === 400) {
+      return json(400, { error: "评论内容无效或不符合要求。" });
+    }
+    return json(502, { error: "评论暂时不可用。" });
+  }
   return json(201, await response.json());
 }
 

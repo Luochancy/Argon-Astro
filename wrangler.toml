@@ -36,5 +36,5 @@ run_worker_first = [
   "!/feed.xml",
   "!/agent-index.json",
 ]
-html_handling = "force-trailing-slash"
+html_handling = "none"
 not_found_handling = "404-page"

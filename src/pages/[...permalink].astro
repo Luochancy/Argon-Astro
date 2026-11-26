@@ -1,0 +1,304 @@
+---
+import Base from "../layouts/Base.astro";
+import Comments from "../components/Comments.astro";
+import Share from "../components/Share.astro";
+import PostMeta from "../components/PostMeta.astro";
+import ShuoshuoCard from "../components/ShuoshuoCard.astro";
+import { loadThemeConfig } from "../config/load";
+import {
+  publishedMoments,
+  publishedPages,
+  publishedPosts,
+  relatedPosts,
+  type ContentEntry,
+} from "../lib/content/queries";
+import { entryRouteParam, entryUrl } from "../lib/content/urls.mjs";
+import { buildArticleJsonLd, buildShuoshuoJsonLd } from "../lib/agent/jsonld.mjs";
+import { entryMarkdownPath } from "../lib/agent/markdown-export.mjs";
+import { formatDate } from "../lib/date-format.mjs";
+import { isOutdated } from "../lib/appearance.mjs";
+import { outdatedNotice } from "../lib/outdated.mjs";
+import { bannerThumbnailCss } from "../lib/banner-thumb.mjs";
+import { firstImage } from "../lib/thumbnail.mjs";
+import { renderCommentList } from "../lib/comments/render.mjs";
+import { renderAfterPost } from "../lib/rich-text.mjs";
+import { renderTimeline } from "../lib/timeline.mjs";
+import { t } from "../lib/i18n";
+
+export function getStaticPaths() {
+  // Static routes owned by dedicated .astro files (non-.html exact paths).
+  const reservedExact = new Set([
+    "",
+    "archives",
+    "links",
+    "shuoshuo",
+    "search",
+    "tags",
+    "404",
+    "posts",
+    "categories",
+    "page",
+    "argon",
+    "api",
+    "media",
+  ]);
+  const seen = new Set<string>();
+  const all: ContentEntry[] = [...publishedPosts(), ...publishedMoments(), ...publishedPages()];
+  const paths: { params: { permalink: string }; props: { entry: ContentEntry } }[] = [];
+
+  for (const entry of all) {
+    const param = entryRouteParam(entry);
+    if (!param || reservedExact.has(param.toLowerCase()) || seen.has(param)) continue;
+    seen.add(param);
+    paths.push({ params: { permalink: param }, props: { entry } });
+  }
+  return paths;
+}
+
+interface Props { entry: ContentEntry }
+const { entry } = Astro.props;
+const config = loadThemeConfig();
+const lang = config.site.language;
+const isZh = lang.toLowerCase().startsWith("zh");
+const canonicalPath = entryUrl(entry);
+const absUrl = Astro.site ? new URL(canonicalPath, Astro.site).toString() : canonicalPath;
+const bakedCommentsHtml = entry.data.comments.length > 0 ? renderCommentList(entry.data.comments) : "";
+const markdownUrl = entryMarkdownPath(entry);
+
+// Post-specific computations
+const allPosts = entry.kind === "post" || (entry.kind === "page" && entry.data.template === "timeline")
+  ? publishedPosts()
+  : [];
+const related = entry.kind === "post"
+  ? relatedPosts(allPosts, entry, config.article.related, config.article.relatedLimit, config.article.relatedOrderBy, config.article.relatedOrder)
+  : [];
+const postIndex = entry.kind === "post" ? allPosts.findIndex((item) => item.id === entry.id) : -1;
+const prev = postIndex >= 0 ? allPosts[postIndex + 1] : undefined;
+const next = postIndex >= 0 ? allPosts[postIndex - 1] : undefined;
+const outdated = entry.kind === "post" && isOutdated(entry.data.date, config.article.outdatedDays);
+const outdatedDeltaDays = Math.max(0, Math.floor((Date.now() - entry.data.date.getTime()) / 86400000));
+const bannerThumb = entry.kind === "post" ? bannerThumbnailCss(config.article.thumbnailInBanner, entry.data.cover) : "";
+const hasHeaderThumb = entry.kind === "post" && Boolean(entry.data.cover) && !config.article.thumbnailInBanner;
+const afterPostRendered = entry.kind === "post"
+  ? renderAfterPost(config.article.afterPostHtml, {
+      url: absUrl,
+      title: entry.data.title,
+      author: config.sidebar.authorName || config.site.title,
+    })
+  : "";
+
+// Shuoshuo-specific computations
+const momentDate = entry.data.date;
+const mMonth = momentDate.getMonth() + 1;
+const mDay = String(momentDate.getDate()).padStart(2, "0");
+const mYear = momentDate.getFullYear();
+const mHms = `${String(momentDate.getHours()).padStart(2, "0")}:${String(momentDate.getMinutes()).padStart(2, "0")}:${String(momentDate.getSeconds()).padStart(2, "0")}`;
+const upvoteId = entry.data.wpId ?? entry.id;
+
+// Timeline/Shuoshuo page template computations
+const isTimelinePage = entry.kind === "page" && entry.data.template === "timeline";
+const isShuoshuoPage = entry.kind === "page" && entry.data.template === "shuoshuo";
+const timelineHtml = isTimelinePage
+  ? renderTimeline(
+      allPosts.map((post) => ({
+        title: post.data.title,
+        href: entryUrl(post),
+        date: post.data.date.toISOString(),
+      })),
+      config.article.timelineShowMonth !== false,
+      canonicalPath,
+      lang,
+    )
+  : "";
+const timelineLatestDate = isTimelinePage && allPosts.length > 0
+  ? formatDate(allPosts[0].data.date, config.site.dateFormat)
+  : "";
+const allMoments = isShuoshuoPage ? publishedMoments() : [];
+const showPageComments = entry.kind === "page" && (
+  entry.data.commentsOpen || entry.data.template === "message" || entry.data.comments.length > 0
+);
+
+const jsonLd = entry.kind === "post"
+  ? buildArticleJsonLd(config, entry)
+  : entry.kind === "shuoshuo"
+    ? buildShuoshuoJsonLd(config, entry)
+    : undefined;
+---
+{entry.kind === "post" ? (
+  <Base title={entry.data.title} description={entry.data.description} image={entry.data.cover} catalog markdownUrl={markdownUrl} jsonLd={jsonLd}>
+    {bannerThumb && <style set:html={bannerThumb}></style>}
+    <article class="post post-full card bg-white shadow-sm border-0" id={"post-" + entry.id}>
+      <header class:list={["post-header text-center", { "post-header-with-thumbnail": hasHeaderThumb }]}>
+        {hasHeaderThumb && <img class="post-thumbnail" src={entry.data.cover} alt="" />}
+        {hasHeaderThumb ? (
+          <div class="post-header-text-container">
+            <a class="post-title" href={canonicalPath}>{entry.data.title}</a>
+            <PostMeta post={entry} config={config} />
+          </div>
+        ) : (
+          <>
+            <a class="post-title" href={canonicalPath}>{entry.data.title}</a>
+            <PostMeta post={entry} config={config} />
+          </>
+        )}
+      </header>
+      {config.motion.readingProgress !== false && <div id="reading-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>}
+      <div class="post-content" id="post_content">
+        {outdated && <div set:html={outdatedNotice(config.article.outdatedTip, config.article.outdatedTipType, config.article.outdatedTimeType, formatDate(entry.data.date, config.site.dateFormat), outdatedDeltaDays)}></div>}
+        <Fragment set:html={entry.html} />
+      </div>
+      {config.article.donateQr && (
+        <div class="post-donate">
+          <button class="btn donate-btn btn-danger" type="button">{t(lang, "donate")}</button>
+          <div class="donate-qrcode card shadow-sm bg-white"><img src={config.article.donateQr} alt="" /></div>
+        </div>
+      )}
+      {afterPostRendered && <div class="additional-content-after-post" set:html={afterPostRendered}></div>}
+      {entry.data.tags.length > 0 && (
+        <div class="post-tags">
+          <i class="fa fa-tags" aria-hidden="true"></i>
+          {entry.data.tags.map((tag) => <a class="tag badge badge-secondary post-meta-detail-tag" href={"/tags/" + encodeURIComponent(tag) + "/"}>{tag}</a>)}
+        </div>
+      )}
+    </article>
+    {config.article.showShare && <Share url={absUrl} title={entry.data.title} />}
+    <Comments config={config} wpId={entry.data.wpId} bakedCommentsHtml={bakedCommentsHtml} />
+    {(prev || next) && (
+      <div class="post-navigation card shadow-sm border-0">
+        <div class="post-navigation-item post-navigation-pre">{prev && (
+          <><span class="page-navigation-extra-text"><i class="fa fa-arrow-circle-o-left" aria-hidden="true"></i>{t(lang, "prev")}</span><a href={entryUrl(prev)}>{prev.data.title}</a></>
+        )}</div><div class="post-navigation-item post-navigation-next">{next && (
+          <><span class="page-navigation-extra-text">{t(lang, "next")} <i class="fa fa-arrow-circle-o-right" aria-hidden="true"></i></span><a href={entryUrl(next)}>{next.data.title}</a></>
+        )}</div>
+      </div>
+    )}
+    {related.length > 0 && (
+      <div class="related-posts card shadow-sm border-0">
+        <h2 class="post-comment-title" style="margin-top:1.2rem;margin-left:1.5rem;margin-right:1.5rem;">
+          <i class="fa fa-book"></i><span>{t(lang, "related")}</span>
+        </h2>
+        <div style="overflow-x:auto;padding:0.8rem 1.5rem;">
+          {related.map((item) => {
+            const itemCover = item.data.cover || (config.article.firstImageAsThumbnail ? firstImage(item.html) : "");
+            return (
+              <a class="related-post-card" href={entryUrl(item)}>
+                <div class:list={["related-post-card-container", { "has-thumbnail": Boolean(itemCover) }]}>
+                  <div class="related-post-title clamp" clamp-line="3">{item.data.title}</div>
+                  <i class="fa fa-chevron-right related-post-arrow" aria-hidden="true"></i>
+                </div>
+                {itemCover && <img class="related-post-thumbnail" src={itemCover} alt="" loading="lazy" />}
+              </a>
+            );
+          })}
+        </div>
+      </div>
+    )}
+  </Base>
+) : entry.kind === "shuoshuo" ? (
+  <Base title={entry.data.title || t(lang, "shuoshuo")} markdownUrl={markdownUrl} jsonLd={jsonLd}>
+    <div class="shuoshuo-container">
+      <div class="shuoshuo-meta shadow-sm">
+        <span>
+          <i class="fa fa-calendar-o" aria-hidden="true"></i>
+          <span class="shuoshuo-date-month">{mMonth}</span>{isZh ? " 月 " : " / "}
+          <span class="shuoshuo-date-date">{mDay}</span>{isZh ? " 日 , " : " / "}
+          <span class="shuoshuo-date-year">{mYear}</span>
+          <div class="post-meta-devide">|</div>
+          <i class="fa fa-clock-o" aria-hidden="true"></i>
+          <span class="shuoshuo-date-time">{mHms}</span>
+        </span>
+        {entry.data.sticky && (
+          <>
+            <div class="post-meta-devide">|</div>
+            <div class="post-meta-detail post-meta-detail-words">
+              <i class="fa fa-thumb-tack" aria-hidden="true"></i>
+              {t(lang, "sticky")}
+            </div>
+          </>
+        )}
+        {entry.data.mood && (
+          <>
+            <div class="post-meta-devide">|</div>
+            <div class="post-meta-detail post-meta-detail-words">{entry.data.mood}</div>
+          </>
+        )}
+      </div>
+      <article class="card shuoshuo-main bg-white shadow-sm border-0" id={"moment-" + entry.id}>
+        {entry.data.title && <a class="shuoshuo-title" href={canonicalPath}>{entry.data.title}</a>}
+        <div class="shuoshuo-content" id="post_content" set:html={entry.html}></div>
+        {entry.data.images.length > 0 && (
+          <div class="shuoshuo-images">
+            {entry.data.images.map((src) => <img src={src} alt="" loading="lazy" />)}
+          </div>
+        )}
+        <div class="shuoshuo-operations">
+          <button class="shuoshuo-upvote btn btn-icon btn-outline-primary btn-sm" type="button" data-id={upvoteId}>
+            <span class="btn-inner--icon"><i class="fa fa-thumbs-o-up"></i></span>
+            <span class="btn-inner--text" style="margin-left: 2px;">
+              <span class="shuoshuo-upvote-num">{entry.data.upvotes}</span>
+              <i class="fa fa-spinner fa-spin" style="margin-left: 0;"></i>
+            </span>
+          </button>
+        </div>
+      </article>
+    </div>
+    {config.article.showShare && <Share url={absUrl} title={entry.data.title || t(lang, "shuoshuo")} />}
+    <Comments config={config} wpId={entry.data.wpId} bakedCommentsHtml={bakedCommentsHtml} />
+  </Base>
+) : isTimelinePage ? (
+  <Base title={entry.data.title || t(lang, "archives")} description={entry.data.description} catalog markdownUrl={markdownUrl}>
+    <article class="post post-full card bg-white shadow-sm border-0">
+      <header class="post-header text-center">
+        <a class="post-title" href={canonicalPath}>{entry.data.title || t(lang, "archives")}</a>
+        <div class="post-meta">
+          {timelineLatestDate && (
+            <div class="post-meta-detail post-meta-detail-time">
+              <i class="fa fa-clock-o" aria-hidden="true"></i>
+              <time datetime={allPosts[0].data.date.toISOString()}>{timelineLatestDate}</time>
+            </div>
+          )}
+          {timelineLatestDate && <div class="post-meta-devide">|</div>}
+          <div class="post-meta-detail post-meta-detail-words">
+            <i class="fa fa-book" aria-hidden="true"></i>
+            <span>{isZh ? `共 ${allPosts.length} 篇文章` : `${allPosts.length} posts`}</span>
+          </div>
+        </div>
+      </header>
+      <div class="post-content" id="post_content">
+        {entry.html.trim() && <Fragment set:html={entry.html} />}
+        <Fragment set:html={timelineHtml} />
+      </div>
+    </article>
+    {config.article.showShare && <Share url={absUrl} title={entry.data.title || t(lang, "archives")} />}
+    {showPageComments && <Comments config={config} wpId={entry.data.wpId} bakedCommentsHtml={bakedCommentsHtml} />}
+  </Base>
+) : isShuoshuoPage ? (
+  <Base title={entry.data.title || t(lang, "shuoshuo")} description={entry.data.description} markdownUrl={markdownUrl}>
+    <div slot="page-info" class="page-information-card-container">
+      <div class="page-information-card card bg-gradient-secondary shadow-lg border-0">
+        <div class="card-body">
+          <h3 class="text-black">{entry.data.title || t(lang, "shuoshuo")}</h3>
+          <p class="text-black mt-3 mb-0 opacity-8">
+            <i class="fa fa-quote-left mr-1"></i>
+            {allMoments.length} {isZh ? "条说说" : "moments"}
+          </p>
+        </div>
+      </div>
+    </div>
+    {allMoments.map((item) => (
+      <ShuoshuoCard item={item} language={lang} fold={config.motion.foldLongShuoshuo} variant="full">
+        <Fragment set:html={item.html} />
+      </ShuoshuoCard>
+    ))}
+  </Base>
+) : (
+  <Base title={entry.data.title} description={entry.data.description} markdownUrl={markdownUrl}>
+    <article class="post post-full card bg-white shadow-sm border-0">
+      <header class="post-header text-center">
+        <a class="post-title" href={canonicalPath}>{entry.data.title}</a>
+      </header>
+      <div class="post-content" id="post_content" set:html={entry.html}></div>
+    </article>
+    {showPageComments && <Comments config={config} wpId={entry.data.wpId} bakedCommentsHtml={bakedCommentsHtml} />}
+  </Base>
+)}

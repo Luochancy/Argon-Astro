@@ -4,6 +4,7 @@ import { toClientConfig } from "../config/public";
 import { themeColorStyle } from "../lib/color";
 import { htmlClass } from "../lib/html-class";
 import { pageBackgroundCss } from "../lib/appearance.mjs";
+import { resolveBackgroundToken } from "../lib/content/urls.mjs";
 import { googleFontHref } from "../lib/fonts.mjs";
 import { mathScriptUrl } from "../lib/outdated.mjs";
 import { ClientRouter } from "astro:transitions";
@@ -41,8 +42,12 @@ const mathHref = config.motion.math === "mathjax2"
     : "";
 const katexCssHref = mathScriptUrl(config.motion.katexCdn) || "/argon/vendor/katex/katex.min.css";
 const codeTheme = (config.motion.codeTheme || "vs2015").replace(/[^a-z0-9._/-]/gi, "");
-const bannerCss = config.banner.backgroundUrl
-  ? "section.banner{background-image:url(" + config.banner.backgroundUrl + ") !important}"
+const bannerBgUrl = resolveBackgroundToken(config.banner.backgroundUrl);
+const bannerCss = bannerBgUrl
+  ? "section.banner{background-image:url(" + bannerBgUrl + ") !important}"
+  : "";
+const toolbarMaskCss = config.banner.toolbarMask
+  ? "#banner:after{content:'';width:100vw;position:absolute;left:0;top:0;height:120px;background:linear-gradient(180deg,rgba(0,0,0,0.25) 0%,rgba(0,0,0,0.15) 35%,rgba(0,0,0,0) 100%);display:block;z-index:-1;}.banner-title{text-shadow:0 5px 15px rgba(0,0,0,.2);}"
   : "";
 ---
 
@@ -74,6 +79,7 @@ const bannerCss = config.banner.backgroundUrl
     <style id="themecolor_css" set:html={colorStyle}></style>
     {backgroundCss && <style set:html={backgroundCss}></style>}
     {bannerCss && <style set:html={bannerCss}></style>}
+    {toolbarMaskCss && <style set:html={toolbarMaskCss}></style>}
     <script is:inline>
       (function () {
         var root = document.documentElement;

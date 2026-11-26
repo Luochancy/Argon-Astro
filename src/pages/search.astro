@@ -2,6 +2,7 @@
 import Base from "../layouts/Base.astro";
 import { loadThemeConfig } from "../config/load";
 import { publishedMoments, publishedPages, publishedPosts } from "../lib/content/queries";
+import { entryUrl } from "../lib/content/urls.mjs";
 import { t } from "../lib/i18n";
 import { enabledSearchKinds } from "../lib/search-kinds.mjs";
 
@@ -10,9 +11,9 @@ const lang = config.site.language;
 const isZh = lang.toLowerCase().startsWith("zh");
 const kinds = enabledSearchKinds(config.article.searchFilters);
 const index = [
-  ...(kinds.includes("post") ? publishedPosts().map((post) => ({ kind: "post", title: post.data.title, href: "/posts/" + post.id + "/", text: post.data.description + " " + post.data.tags.join(" ") })) : []),
-  ...(kinds.includes("page") ? publishedPages().map((page) => ({ kind: "page", title: page.data.title, href: "/" + page.id + "/", text: page.data.description })) : []),
-  ...(kinds.includes("shuoshuo") ? publishedMoments().map((item) => ({ kind: "shuoshuo", title: item.data.title || "说说", href: "/shuoshuo/" + item.id + "/", text: item.data.mood })) : []),
+  ...(kinds.includes("post") ? publishedPosts().map((post) => ({ kind: "post", title: post.data.title, href: entryUrl(post), text: post.data.description + " " + post.data.tags.join(" ") })) : []),
+  ...(kinds.includes("page") ? publishedPages().map((page) => ({ kind: "page", title: page.data.title, href: entryUrl(page), text: page.data.description })) : []),
+  ...(kinds.includes("shuoshuo") ? publishedMoments().map((item) => ({ kind: "shuoshuo", title: item.data.title || "说说", href: entryUrl(item), text: item.data.mood })) : []),
 ];
 ---
 <Base title={t(lang, "searchTitle")}>

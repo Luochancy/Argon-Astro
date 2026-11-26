@@ -32,14 +32,21 @@ export function bindComments(
   const status = document.getElementById("argon-comment-status");
   const question = document.getElementById("argon-captcha-question");
   const refreshCaptcha = async () => {
-    if (!question || options.captchaAjax === false) return;
+    if (!question) return;
+    question.textContent = "...";
     const challenge = await fetch(endpoint + "?captcha=1", { headers: { accept: "application/json" } });
-    if (!challenge.ok) return;
+    if (!challenge.ok) {
+      question.textContent = "";
+      return;
+    }
     const data = (await challenge.json()) as { question?: string; token?: string };
-    question.textContent = data.question || "";
+    question.textContent = data.question ? `${data.question} = ?` : "";
     const token = form?.querySelector<HTMLInputElement>("[name=captchaToken]");
     if (token && data.token) token.value = data.token;
   };
+  question?.addEventListener("click", () => {
+    void refreshCaptcha().catch(() => undefined);
+  }, { signal });
   void refreshCaptcha().catch(() => undefined);
 
   let allItems: LiveComment[] = [];
@@ -306,11 +313,28 @@ export function bindComments(
           captchaAnswer: String(data.get("captchaAnswer") ?? ""),
         }),
       });
-      if (status) status.textContent = response.ok ? "Sent." : "Comment service is unavailable.";
+      let payload: { error?: string; approved?: boolean } | null = null;
+      try {
+        payload = (await response.json()) as { error?: string; approved?: boolean };
+      } catch {
+        payload = null;
+      }
       if (response.ok) {
+        if (status) {
+          status.textContent = payload?.approved === false
+            ? "评论已提交，等待审核后显示。"
+            : "评论已发送。";
+        }
         form.reset();
         await load();
         await refreshCaptcha();
+      } else {
+        if (status) {
+          status.textContent = payload?.error || "评论提交失败，请稍后重试。";
+        }
+        if (response.status === 400) {
+          await refreshCaptcha().catch(() => undefined);
+        }
       }
     },
     { signal },

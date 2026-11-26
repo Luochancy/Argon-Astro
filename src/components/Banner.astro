@@ -4,6 +4,7 @@ interface Props { config: ThemeConfig }
 const { config } = Astro.props;
 const title = config.banner.title || config.site.title;
 const hidden = config.banner.size === "hide";
+const isHitokoto = config.banner.subtitle.trim() === "--hitokoto--";
 ---
 {!hidden && (
   <section id="banner" class="banner section section-lg section-shaped">
@@ -14,12 +15,20 @@ const hidden = config.banner.size === "hide";
       {config.banner.typing ? (
         <div class="banner-title text-white" data-interval={config.banner.typingInterval}>
           <span class="banner-title-inner" data-text={title}>&nbsp;</span>
-          {config.banner.subtitle && <span class="banner-subtitle d-block" data-text={config.banner.subtitle}>&nbsp;</span>}
+          {config.banner.subtitle && (
+            isHitokoto
+              ? <span class="banner-subtitle d-block"><span class="hitokoto"></span></span>
+              : <span class="banner-subtitle d-block" data-text={config.banner.subtitle}>&nbsp;</span>
+          )}
         </div>
       ) : (
         <div class="banner-title text-white">
           <span class="banner-title-inner">{title}</span>
-          {config.banner.subtitle && <span class="banner-subtitle d-block">{config.banner.subtitle}</span>}
+          {config.banner.subtitle && (
+            isHitokoto
+              ? <span class="banner-subtitle d-block"><span class="hitokoto"></span></span>
+              : <span class="banner-subtitle d-block">{config.banner.subtitle}</span>
+          )}
         </div>
       )}
     </div>

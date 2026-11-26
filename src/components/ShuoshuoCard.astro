@@ -1,5 +1,6 @@
 ---
 import type { ShuoshuoEntry } from "../lib/content/queries";
+import { entryUrl } from "../lib/content/urls.mjs";
 import { t } from "../lib/i18n";
 
 interface Props {
@@ -11,7 +12,7 @@ interface Props {
 
 const { item, language, fold, variant = "preview" } = Astro.props;
 const isZh = language.toLowerCase().startsWith("zh");
-const href = "/shuoshuo/" + item.id + "/";
+const href = entryUrl(item);
 const date = item.data.date;
 const month = date.getMonth() + 1;
 const day = String(date.getDate()).padStart(2, "0");

@@ -26,8 +26,17 @@ const avatarUrl = config.sidebar.authorImage || DEFAULT_AVATAR;
 
 const normPath = (p: string) => {
   const clean = p.split(/[?#]/)[0] || "/";
+  if (/\.html?$/i.test(clean)) return clean;
   return clean === "/" ? "/" : clean.replace(/\/+$/, "") + "/";
 };
+const iconClass = (icon?: string) => {
+  const clean = String(icon || "").trim();
+  if (!clean) return "";
+  return /^(?:fa|ni)\s/i.test(clean) ? clean : `fa ${clean}`;
+};
+const isHitokoto = config.sidebar.bannerSubtitle.trim() === "--hitokoto--";
+const archivesHref = config.article.archivesUrl || "/archives/";
+const sidebarFriendLinks = Array.isArray(config.sidebar.friendLinks) ? config.sidebar.friendLinks : [];
 const currentPath = normPath(Astro.url.pathname);
 const isMenuCurrent = (href: string, children: { href: string }[] = []) => {
   if (!href || href.startsWith("http") || href === "#") return false;
@@ -49,7 +58,11 @@ const isMenuCurrent = (href: string, children: { href: string }[] = []) => {
   <div id="leftbar_part1" class="widget widget_search card bg-white shadow-sm border-0">
     <div class="leftbar-banner card-body">
       <span class="leftbar-banner-title text-white">{title}</span>
-      {config.sidebar.bannerSubtitle && <span class="leftbar-banner-subtitle text-white">{config.sidebar.bannerSubtitle}</span>}
+      {config.sidebar.bannerSubtitle && (
+        <span class="leftbar-banner-subtitle text-white">
+          {isHitokoto ? <span class="hitokoto"></span> : config.sidebar.bannerSubtitle}
+        </span>
+      )}
     </div>
     <ul id="leftbar_part1_menu" class="leftbar-menu">
       {config.sidebar.menu.map((item) => (
@@ -60,16 +73,16 @@ const isMenuCurrent = (href: string, children: { href: string }[] = []) => {
             current: isMenuCurrent(item.href, item.children),
           },
         ]}>
-          <a href={item.href}>
-            {item.icon && <i class={`fa ${item.icon}`} aria-hidden="true"></i>}
+          <a href={item.href} target={item.target} rel={item.target === "_blank" ? "noopener" : undefined}>
+            {item.icon && <i class={iconClass(item.icon)} aria-hidden="true"></i>}
             {item.label}
           </a>
           {item.children.length > 0 && (
             <ul class="leftbar-menu-item leftbar-menu-subitem shadow-sm">
               {item.children.map((child) => (
                 <li class:list={["leftbar-menu-item", { current: isMenuCurrent(child.href) }]}>
-                  <a href={child.href}>
-                    {child.icon && <i class={`fa ${child.icon}`} aria-hidden="true"></i>}
+                  <a href={child.href} target={child.target} rel={child.target === "_blank" ? "noopener" : undefined}>
+                    {child.icon && <i class={iconClass(child.icon)} aria-hidden="true"></i>}
                     {child.label}
                   </a>
                 </li>
@@ -118,13 +131,13 @@ const isMenuCurrent = (href: string, children: { href: string }[] = []) => {
             {config.sidebar.authorDescription && <h6 id="leftbar_overview_author_description">{config.sidebar.authorDescription}</h6>}
             <nav class="site-state">
               <div class="site-state-item site-state-posts">
-                <a href="/archives/">
+                <a href={archivesHref}>
                   <span class="site-state-item-count" data-count="posts">{postCount}</span>
                   <span class="site-state-item-name">{t(lang, "articles")}</span>
                 </a>
               </div>
               <div class="site-state-item site-state-categories">
-                <a href="/archives/">
+                <a href={archivesHref}>
                   <span class="site-state-item-count" data-count="categories">{categoryCount}</span>
                   <span class="site-state-item-name">{t(lang, "categories")}</span>
                 </a>
@@ -139,11 +152,29 @@ const isMenuCurrent = (href: string, children: { href: string }[] = []) => {
             {config.sidebar.authorLinks.length > 0 && (
               <div class="site-author-links">
                 {config.sidebar.authorLinks.map((link) => (
-                  <div class="site-author-links-item"><a href={link.href} rel="noopener" target="_blank">{link.label}</a></div>
+                  <div class="site-author-links-item">
+                    <a href={link.href} rel="noopener" target="_blank">
+                      {link.icon && <><i class={iconClass(link.icon)} aria-hidden="true"></i>{" "}</>}
+                      {link.label}
+                    </a>
+                  </div>
                 ))}
               </div>
             )}
-            <div style="height: 20px;"></div>
+            {sidebarFriendLinks.length > 0 ? (
+              <div class="site-friend-links">
+                <div class="site-friend-links-title"><i class="fa fa-fw fa-link" aria-hidden="true"></i> Links</div>
+                <ul class="site-friend-links-ul">
+                  {sidebarFriendLinks.map((link) => (
+                    <li class="site-friend-links-item">
+                      <a href={link.href} rel="noopener" target="_blank">{link.label}</a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <div style="height: 20px;"></div>
+            )}
           </div>
           {widgets && (
             <div class="tab-pane fade" id="leftbar_tab_tools" role="tabpanel" aria-labelledby="leftbar_tab_tools_btn" set:html={widgets}></div>

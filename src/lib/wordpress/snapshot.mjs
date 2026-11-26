@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { createContext, renderDocument } from "../blocks/index.mjs";
+import { normalizeEntryPermalink, relativizeSameOriginUrl } from "../content/urls.mjs";
 import { renderPasswordForm } from "../crypto-post.mjs";
 import { applyReferences } from "../references.mjs";
 
@@ -173,6 +174,38 @@ export async function writeSnapshot(client, root) {
     }
   }
 
+  const relativizeMenuTree = (items) => {
+    if (!Array.isArray(items)) return items;
+    return items.map((item) => {
+      if (!item || typeof item !== "object") return item;
+      const next = { ...item };
+      if (typeof next.href === "string") next.href = relativizeSameOriginUrl(next.href, origin);
+      if (Array.isArray(next.children)) next.children = relativizeMenuTree(next.children);
+      return next;
+    });
+  };
+
+  if (origin) {
+    if (remote.toolbar && typeof remote.toolbar.iconLink === "string") {
+      remote.toolbar.iconLink = relativizeSameOriginUrl(remote.toolbar.iconLink, origin);
+    }
+    if (remote.article && typeof remote.article.archivesUrl === "string") {
+      remote.article.archivesUrl = relativizeSameOriginUrl(remote.article.archivesUrl, origin);
+    }
+    if (remote.toolbar && Array.isArray(remote.toolbar.menu)) {
+      remote.toolbar.menu = relativizeMenuTree(remote.toolbar.menu);
+    }
+    if (remote.sidebar && Array.isArray(remote.sidebar.menu)) {
+      remote.sidebar.menu = relativizeMenuTree(remote.sidebar.menu);
+    }
+    if (remote.sidebar && Array.isArray(remote.sidebar.authorLinks)) {
+      remote.sidebar.authorLinks = relativizeMenuTree(remote.sidebar.authorLinks);
+    }
+    if (remote.sidebar && Array.isArray(remote.sidebar.friendLinks)) {
+      remote.sidebar.friendLinks = relativizeMenuTree(remote.sidebar.friendLinks);
+    }
+  }
+
   if (client.download && downloads.length > 0) {
     const concurrency = Number(client.concurrency) > 0 ? Number(client.concurrency) : 6;
     await runWithConcurrency(downloads, concurrency, ({ url, target }) => client.download(url, target));
@@ -181,14 +214,32 @@ export async function writeSnapshot(client, root) {
   const rewriteUrl = (url) => {
     if (!url) return url;
     if (map.has(url)) return map.get(url);
-    return rewriteMediaUrls(url, map);
+    const rewritten = rewriteMediaUrls(url, map);
+    return relativizeSameOriginUrl(rewritten, origin);
+  };
+
+  const rewriteOriginHrefs = (htmlText) => {
+    if (!origin) return htmlText;
+    const prefix = escapeRegExp(origin);
+    return String(htmlText || "").replace(
+      new RegExp(`(\\bhref=["'])${prefix}(/[^"'<>\\s]*|(?=["']))`, "gi"),
+      (_, attrPrefix, relPath) => attrPrefix + (relPath || "/"),
+    );
   };
 
   const ctx = createContext({
     rewriteUrl,
-    posts: posts.map((item) => ({ id: safeSlug(item.slug, item.id), title: item.title })),
+    posts: posts.map((item) => {
+      const slug = safeSlug(item.slug, item.id);
+      return {
+        id: slug,
+        title: item.title,
+        href: normalizeEntryPermalink(item.permalink) || ("/posts/" + slug + "/"),
+      };
+    }),
     categories: [...new Set(posts.flatMap((item) => item.categories || []))],
     tags: [...new Set(posts.flatMap((item) => item.tags || []))],
+    friendLinks: Array.isArray(remote.friendLinks) ? remote.friendLinks : [],
   });
 
   const resolveCover = (item) => {
@@ -210,12 +261,14 @@ export async function writeSnapshot(client, root) {
       const html = locked
         ? renderPasswordForm({ id: String(item.id || item.slug || "post"), hint: item.passwordHint || "", payload: null, mode: "wordpress" })
         : renderDocument(referenced.html, ctx) + referenced.list;
-      const rewritten = rewriteMediaUrls(html, map);
+      const rewritten = rewriteOriginHrefs(rewriteMediaUrls(html, map));
+      const permalink = normalizeEntryPermalink(item.permalink);
       const matter = {
         title: item.title,
         date: item.date,
         modifiedDate: item.modifiedDate || item.modified || "",
         description: item.excerpt || "",
+        permalink,
         cover: resolveCover(item),
         tags: item.tags || [],
         categories: item.categories || [],
@@ -223,6 +276,9 @@ export async function writeSnapshot(client, root) {
         wpId: item.id,
         upvotes: Number(item.upvotes || 0),
         commentCount: item.commentCount || 0,
+        commentsOpen: item.commentsOpen !== undefined
+          ? Boolean(item.commentsOpen)
+          : (kind !== "pages" || item.template === "message"),
         comments: Array.isArray(item.comments) ? item.comments : [],
         mood: item.mood || "",
         images: (item.images || [])

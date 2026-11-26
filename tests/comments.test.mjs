@@ -85,6 +85,35 @@ assert.equal(postBody.markdown, true);
 assert.equal(postBody.private, true);
 assert.equal(postBody.email, "123456789");
 
+// Captcha is enforced whenever ARGON_CAPTCHA_SECRET is configured, and duplicate/flood errors map cleanly
+const badCap = await handleComments(new Request("https://blog.example/api/comments", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({ postId: 7, author: "Bob", email: "bob@example.com", content: "hi", captchaToken: "", captchaAnswer: "0" }),
+}), { WP_URL: secretHost, WP_USER: "editor", WP_APP_PASSWORD: "app-pass", ARGON_CAPTCHA_SECRET: "cap-secret" });
+assert.equal(badCap.status, 400);
+assert.match((await badCap.json()).error, /验证码/);
+
+const dupErr = await handleComments(new Request("https://blog.example/api/comments", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({ postId: 7, author: "Bob", email: "bob@example.com", content: "dup" }),
+}), { WP_URL: secretHost, WP_USER: "editor", WP_APP_PASSWORD: "app-pass" }, async () => {
+  return new Response(JSON.stringify({ code: "comment_duplicate", message: "Duplicate" }), { status: 409 });
+});
+assert.equal(dupErr.status, 409);
+assert.match((await dupErr.json()).error, /重复评论/);
+
+const floodErr = await handleComments(new Request("https://blog.example/api/comments", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({ postId: 7, author: "Bob", email: "bob@example.com", content: "fast" }),
+}), { WP_URL: secretHost, WP_USER: "editor", WP_APP_PASSWORD: "app-pass" }, async () => {
+  return new Response(JSON.stringify({ code: "comment_flood", message: "Too fast" }), { status: 429 });
+});
+assert.equal(floodErr.status, 429);
+assert.match((await floodErr.json()).error, /频繁/);
+
 // POST action=pin
 let pinUrl = "";
 const pinned = await handleComments(new Request("https://blog.example/api/comments", {

@@ -11,6 +11,8 @@ assert.equal(acceptsMarkdown("text/html, text/markdown;q=0.5"), false);
 assert.equal(acceptsMarkdown("*/*"), false);
 assert.equal(acceptsMarkdown(""), false);
 assert.equal(resolveNegotiatedMarkdownPath("/posts/hello-argon/"), "/posts/hello-argon.md");
+assert.equal(resolveNegotiatedMarkdownPath("/archives/707.html"), "/archives/707.md");
+assert.equal(resolveNegotiatedMarkdownPath("/aboutme.html"), "/aboutme.md");
 assert.equal(resolveNegotiatedMarkdownPath("/"), "/llms.txt");
 assert.equal(resolveNegotiatedMarkdownPath("/about/"), "/about.md");
 assert.equal(resolveNegotiatedMarkdownPath("/argon/style.css"), null);
@@ -52,10 +54,16 @@ const mockAssets = {
         headers: { "content-type": "text/plain" },
       });
     }
-    if (p === "/posts/hello-argon/" || p === "/archives/") {
+    if (p === "/posts/hello-argon/" || p === "/archives/" || p === "/archives/707.html" || p === "/dir-route/index.html") {
       return new Response("<!doctype html><html><body>HTML</body></html>", {
         status: 200,
         headers: { "content-type": "text/html; charset=utf-8" },
+      });
+    }
+    if (p === "/archives/707.md") {
+      return new Response("# Post 707\n\nBody.\n", {
+        status: 200,
+        headers: { "content-type": "text/markdown" },
       });
     }
     return new Response("Not Found", { status: 404 });
@@ -143,5 +151,28 @@ const envHomeNeg = await worker.fetch(
 assert.equal(envHomeNeg.status, 200);
 assert.equal(envHomeNeg.headers.get("content-type"), "text/markdown; charset=utf-8");
 assert.match(await envHomeNeg.text(), /^# Serverless LLMs/);
+
+// 11. WordPress .html permalink stays at exact URL (200) and supports Accept: text/markdown
+const wpHtmlPage = await worker.fetch(
+  new Request("https://blog.example/archives/707.html", { headers: { Accept: "text/html" } }),
+  { ASSETS: mockAssets },
+);
+assert.equal(wpHtmlPage.status, 200);
+assert.match(wpHtmlPage.headers.get("vary") || "", /Accept/i);
+
+const wpHtmlNeg = await worker.fetch(
+  new Request("https://blog.example/archives/707.html", { headers: { Accept: "text/markdown" } }),
+  { ASSETS: mockAssets },
+);
+assert.equal(wpHtmlNeg.status, 200);
+assert.equal(wpHtmlNeg.headers.get("content-type"), "text/markdown; charset=utf-8");
+assert.match(await wpHtmlNeg.text(), /^# Post 707/);
+
+// 12. html_handling = "none" index.html resolution and trailing-slash redirect for directory routes
+const dirIndex = await worker.fetch(new Request("https://blog.example/dir-route/"), { ASSETS: mockAssets });
+assert.equal(dirIndex.status, 200);
+const dirRedirect = await worker.fetch(new Request("https://blog.example/dir-route"), { ASSETS: mockAssets });
+assert.equal(dirRedirect.status, 308);
+assert.equal(dirRedirect.headers.get("location"), "https://blog.example/dir-route/");
 
 console.log("cfw worker ok");

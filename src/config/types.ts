@@ -2,6 +2,7 @@ export interface MenuItem {
   label: string;
   href: string;
   icon?: string;
+  target?: string;
   children: MenuItem[];
 }
 
@@ -15,6 +16,7 @@ export interface FriendLink {
 export interface AuthorLink {
   label: string;
   href: string;
+  icon?: string;
 }
 
 export type SourceMode = "local" | "wordpress";
@@ -84,6 +86,7 @@ export interface ThemeConfig {
     authorImage: string;
     menu: MenuItem[];
     authorLinks: AuthorLink[];
+    friendLinks?: AuthorLink[];
     widgets: { type: string; title: string; html?: string; items?: { label: string; href: string }[] }[];
   };
   article: {

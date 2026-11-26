@@ -58,7 +58,11 @@ export function resolveNegotiatedMarkdownPath(pathname) {
   if (!trimmed || trimmed === "/") {
     return "/llms.txt";
   }
-  // Skip paths that already carry a file extension (e.g. .xml, .json, .ico, .png).
+  // Support WordPress `.html` permalinks (e.g. `/archives/707.html` -> `/archives/707.md`).
+  if (/\.html?$/i.test(trimmed)) {
+    return trimmed.replace(/\.html?$/i, "") + ".md";
+  }
+  // Skip paths that already carry another file extension (e.g. .xml, .json, .ico, .png).
   const lastSegment = trimmed.slice(trimmed.lastIndexOf("/") + 1);
   if (lastSegment.includes(".")) {
     return null;

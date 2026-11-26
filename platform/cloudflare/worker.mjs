@@ -23,6 +23,72 @@ function normalizeApiPath(pathname) {
   return pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
 }
 
+async function handleBingWallpaper(request) {
+  const method = request.method.toUpperCase();
+  if (method !== "GET" && method !== "HEAD") {
+    return new Response("Method Not Allowed", { status: 405 });
+  }
+  try {
+    const apiRes = await fetch("https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1", {
+      headers: { accept: "application/json", "user-agent": "Argon-Astro-Worker/1.0" },
+      cf: { cacheTtl: 21600, cacheEverything: true },
+    });
+    if (apiRes.ok) {
+      const data = await apiRes.json();
+      const rel = data && Array.isArray(data.images) && data.images[0] ? data.images[0].url : "";
+      if (typeof rel === "string" && rel.startsWith("/")) {
+        const target = "https://www.bing.com" + rel;
+        const imgRes = await fetch(target, {
+          headers: { "user-agent": "Argon-Astro-Worker/1.0" },
+          cf: { cacheTtl: 21600, cacheEverything: true },
+        });
+        if (imgRes.ok) {
+          const headers = new Headers(imgRes.headers);
+          headers.set("cache-control", "public, max-age=3600, s-maxage=21600");
+          return new Response(method === "HEAD" ? null : imgRes.body, {
+            status: 200,
+            headers,
+          });
+        }
+        return new Response(null, {
+          status: 302,
+          headers: {
+            location: target,
+            "cache-control": "public, max-age=3600",
+          },
+        });
+      }
+    }
+  } catch {
+    // Fall through to 502 so CSS gradient placeholder stays visible.
+  }
+  return new Response("Bing wallpaper unavailable.", { status: 502 });
+}
+
+async function fetchStaticAsset(request, url, env) {
+  const direct = await env.ASSETS.fetch(request);
+  if (direct.status !== 404) return direct;
+  const pathname = url.pathname;
+  if (pathname === "/" || pathname.endsWith("/")) {
+    const idxUrl = new URL(pathname + "index.html", url.origin);
+    const idxRes = await env.ASSETS.fetch(new Request(idxUrl.toString(), { method: request.method, headers: request.headers }));
+    if (idxRes.status !== 404) return idxRes;
+  } else {
+    const lastSegment = pathname.slice(pathname.lastIndexOf("/") + 1);
+    if (!lastSegment.includes(".")) {
+      const idxUrl = new URL(pathname + "/index.html", url.origin);
+      const idxRes = await env.ASSETS.fetch(new Request(idxUrl.toString(), { method: "HEAD" }));
+      if (idxRes.ok) {
+        return Response.redirect(url.origin + pathname + "/" + url.search, 308);
+      }
+      const htmlUrl = new URL(pathname + ".html", url.origin);
+      const htmlRes = await env.ASSETS.fetch(new Request(htmlUrl.toString(), { method: request.method, headers: request.headers }));
+      if (htmlRes.status !== 404) return htmlRes;
+    }
+  }
+  return direct;
+}
+
 async function buildMarkdownResponse(bodyText, baseHeaders, status, statusText, method) {
   const headers = new Headers(baseHeaders);
   headers.set("content-type", "text/markdown; charset=utf-8");
@@ -55,6 +121,9 @@ export default {
     }
     if (path === "/api/deploy") {
       return handleDeployHook(request, env, seenNonces);
+    }
+    if (path === "/api/bing") {
+      return handleBingWallpaper(request);
     }
     if (path.startsWith("/api/")) {
       return new Response(JSON.stringify({ error: "Not found." }), {
@@ -105,7 +174,7 @@ export default {
       }
     }
 
-    const res = await env.ASSETS.fetch(request);
+    const res = await fetchStaticAsset(request, url, env);
 
     // 3. Direct browser access to .md/.txt mirrors uses text/plain + inline so Chromium/Edge never downloads.
     if ((url.pathname.endsWith(".md") || url.pathname.endsWith(".txt")) && res.ok) {

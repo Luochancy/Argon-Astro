@@ -5,6 +5,7 @@ import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "n
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createContext, renderDocument } from "../src/lib/blocks/index.mjs";
+import { entryUrl } from "../src/lib/content/urls.mjs";
 import { encryptPostHtml, renderPasswordForm } from "../src/lib/crypto-post.mjs";
 import { renderMarkdown } from "../src/lib/markdown.mjs";
 import { protectMath, restoreMath } from "../src/lib/math.mjs";
@@ -43,6 +44,7 @@ function readEntry(file, kind, base) {
     date: data.date ? new Date(data.date).toISOString() : new Date(0).toISOString(),
     modifiedDate: data.modifiedDate ? new Date(data.modifiedDate).toISOString() : "",
     description: String(data.description ?? ""),
+    permalink: data.permalink ? String(data.permalink) : "",
     tags: Array.isArray(data.tags) ? data.tags.map(String) : [],
     categories: Array.isArray(data.categories) ? data.categories.map(String) : [],
     cover: data.cover ? String(data.cover) : "",
@@ -50,6 +52,9 @@ function readEntry(file, kind, base) {
     draft: Boolean(data.draft),
     wpId: typeof data.wpId === "number" ? data.wpId : null,
     commentCount: Number(data.commentCount ?? 0),
+    commentsOpen: data.commentsOpen !== undefined
+      ? Boolean(data.commentsOpen)
+      : (kind !== "page" || String(data.template || "page") === "message"),
     upvotes: Number(data.upvotes ?? 0),
     mood: data.mood ? String(data.mood) : "",
     images: Array.isArray(data.images) ? data.images.map(String) : [],
@@ -82,7 +87,11 @@ for (const [kind, folder] of groups) {
 const published = entries.filter((entry) => !entry.draft);
 
 const baseCtx = createContext({
-  posts: published.filter((entry) => entry.kind === "post").map((entry) => ({ id: entry.id, title: entry.title })),
+  posts: published.filter((entry) => entry.kind === "post").map((entry) => ({
+    id: entry.id,
+    title: entry.title,
+    href: entryUrl(entry),
+  })),
   categories: [...new Set(published.flatMap((entry) => entry.categories))],
   tags: [...new Set(published.flatMap((entry) => entry.tags))],
   friendLinks: Array.isArray(theme.friendLinks) ? theme.friendLinks : [],

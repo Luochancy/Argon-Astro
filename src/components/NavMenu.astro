@@ -2,31 +2,53 @@
 import type { MenuItem } from "../config/types";
 interface Props { items: MenuItem[]; depth?: number }
 const { items, depth = 0 } = Astro.props;
+const iconClass = (icon?: string) => {
+  const clean = String(icon || "").trim();
+  if (!clean) return "";
+  return /^(?:fa|ni)\s/i.test(clean) ? clean : `fa ${clean}`;
+};
 ---
 {depth === 0 ? (
   <ul class="navbar-nav navbar-nav-hover align-items-lg-center">
     {items.map((item) => (
       <li class:list={["nav-item", { dropdown: item.children.length > 0 }]}>
-        <a class="nav-link" href={item.href} data-toggle={item.children.length ? "dropdown" : undefined} no-pjax={item.children.length ? "" : undefined}>
+        <a
+          class="nav-link"
+          href={item.href}
+          target={item.children.length ? undefined : item.target}
+          rel={item.target === "_blank" && !item.children.length ? "noopener" : undefined}
+          data-toggle={item.children.length ? "dropdown" : undefined}
+          no-pjax={item.children.length ? "" : undefined}
+        >
           <i class="ni ni-book-bookmark d-lg-none"></i>
-          <span class="nav-link-inner--text">{item.label}</span>
+          <span class="nav-link-inner--text">
+            {item.icon && <><i class={iconClass(item.icon)} aria-hidden="true"></i>{" "}</>}
+            {item.label}
+          </span>
         </a>
         {item.children.length > 0 && (
           <div class="dropdown-menu">
             {item.children.map((child) => child.children.length > 0 ? (
               <div class="dropdown-group">
                 <a class="dropdown-item dropdown-group-toggle" href={child.href} no-pjax>
+                  {child.icon && <><i class={iconClass(child.icon)} aria-hidden="true"></i>{" "}</>}
                   {child.label}
                   <i class="fa fa-angle-down dropdown-group-caret"></i>
                 </a>
                 <div class="dropdown-group-panel">
                   {child.children.map((grand) => (
-                    <a class="dropdown-item dropdown-group-item" href={grand.href}>{grand.label}</a>
+                    <a class="dropdown-item dropdown-group-item" href={grand.href} target={grand.target} rel={grand.target === "_blank" ? "noopener" : undefined}>
+                      {grand.icon && <><i class={iconClass(grand.icon)} aria-hidden="true"></i>{" "}</>}
+                      {grand.label}
+                    </a>
                   ))}
                 </div>
               </div>
             ) : (
-              <a class="dropdown-item" href={child.href}>{child.label}</a>
+              <a class="dropdown-item" href={child.href} target={child.target} rel={child.target === "_blank" ? "noopener" : undefined}>
+                {child.icon && <><i class={iconClass(child.icon)} aria-hidden="true"></i>{" "}</>}
+                {child.label}
+              </a>
             ))}
           </div>
         )}

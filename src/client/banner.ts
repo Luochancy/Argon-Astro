@@ -1,5 +1,37 @@
-/** Bind Argon banner typing animation (title -> subtitle sequentially) and fullscreen cover scroll-down. */
+const HITOKOTO_CACHE_KEY = "Argon_Hitokoto_Text";
+
+async function populateHitokoto(signal?: AbortSignal): Promise<void> {
+  const nodes = [...document.querySelectorAll<HTMLElement>(".hitokoto")];
+  if (!nodes.length) return;
+  const cached = sessionStorage.getItem(HITOKOTO_CACHE_KEY);
+  if (cached) {
+    nodes.forEach((node) => { node.textContent = cached; });
+    return;
+  }
+  try {
+    const res = await fetch("https://v1.hitokoto.cn", {
+      headers: { accept: "application/json" },
+      signal,
+    });
+    if (!res.ok) throw new Error("hitokoto failed");
+    const data = (await res.json()) as { hitokoto?: string };
+    const text = String(data.hitokoto || "").trim();
+    if (text) {
+      sessionStorage.setItem(HITOKOTO_CACHE_KEY, text);
+      nodes.forEach((node) => { node.textContent = text; });
+    }
+  } catch {
+    if (signal?.aborted) return;
+    nodes.forEach((node) => {
+      if (!node.textContent) node.textContent = "";
+    });
+  }
+}
+
+/** Bind Argon banner typing animation (title -> subtitle sequentially), Hitokoto, and cover scroll-down. */
 export function bindBanner(typing: boolean, interval = 100, signal?: AbortSignal): void {
+  void populateHitokoto(signal);
+
   // Always bind fullscreen cover scroll-down and cover scroll visibility.
   const scrollDownBtn = document.querySelector<HTMLElement>(".cover-scroll-down");
   scrollDownBtn?.addEventListener(

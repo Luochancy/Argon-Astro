@@ -47,7 +47,59 @@ function formatDate(raw) {
   return date.toISOString().slice(0, 10);
 }
 
+function parseInlineSimpleFriendLinks(inner) {
+  const raw = String(inner || "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>\s*<p[^>]*>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .trim();
+  if (!raw) return [];
+  return raw
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => line.split("|").map((p) => p.trim()))
+    .filter((parts) => parts.length >= 2);
+}
+
 function renderFriendLinks(tag, inner, ctx) {
+  if (tag === "sfriendlinks" && inner && inner.includes("|")) {
+    const entries = parseInlineSimpleFriendLinks(inner);
+    if (entries.length > 0) {
+      let out = "<div class=\"friend-links friend-links-style1 friend-links-simple shortcode-friend-links\">";
+      let rowOpen = false;
+      for (const parts of entries) {
+        if (parts[0].toLowerCase() === "category") {
+          if (rowOpen) {
+            out += "</div>";
+            rowOpen = false;
+          }
+          out += "<h3 class=\"friend-links-category-title\">" + esc(parts[1] || "") + "</h3>";
+          continue;
+        }
+        if (!rowOpen) {
+          out += "<div class=\"row\">";
+          rowOpen = true;
+        }
+        const name = esc(parts[0] || "");
+        const url = esc(rewriteUrl(ctx, parts[1] || "#"));
+        const desc = esc(parts[2] || "");
+        const avatarUrl = parts[3] ? rewriteUrl(ctx, parts[3]) : "";
+        const avatar = avatarUrl
+          ? "<img class=\"friend-link-avatar bg-gradient-secondary\" src=\"" + esc(avatarUrl) + "\" alt=\"" + name + "\">"
+          : "";
+        const containerClass = "card shadow-sm friend-link-container" + (avatarUrl ? "" : " no-avatar");
+        out += "<div class=\"link mb-2 col-lg-6 col-md-6\"><div class=\"" + containerClass + "\">"
+          + avatar
+          + "<div class=\"friend-link-content\"><div class=\"friend-link-title title text-primary\"><a href=\"" + url + "\" target=\"_blank\" rel=\"noopener\">" + name + "</a></div>"
+          + "<div class=\"friend-link-description\">" + desc + "</div>"
+          + "<div class=\"friend-link-links\"><a href=\"" + url + "\" target=\"_blank\" rel=\"noopener\" style=\"float:right;margin-right:10px;\"><i class=\"fa fa-angle-right\" style=\"font-weight:bold;\"></i></a></div>"
+          + "</div></div></div>";
+      }
+      if (rowOpen) out += "</div>";
+      return out + "</div>";
+    }
+  }
   const links = Array.isArray(ctx?.friendLinks) ? ctx.friendLinks : [];
   const extraClass = tag === "sfriendlinks" ? " friend-links-simple" : "";
   if (links.length > 0) {

@@ -1,4 +1,5 @@
 import { publishedPosts } from "../lib/content/queries";
+import { entryUrl } from "../lib/content/urls.mjs";
 import { loadThemeConfig } from "../config/load";
 import { renderFeed } from "../lib/feed.mjs";
 
@@ -10,7 +11,7 @@ export function GET() {
     title: config.site.title,
     items: publishedPosts().map((post) => ({
       title: post.data.title,
-      link: "/posts/" + post.id + "/",
+      link: entryUrl(post),
       date: post.data.date.toISOString(),
       description: post.data.description,
     })),

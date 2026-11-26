@@ -4,6 +4,7 @@ export interface EntryData {
   title: string;
   date: Date;
   description: string;
+  permalink: string;
   tags: string[];
   categories: string[];
   cover: string;
@@ -11,6 +12,7 @@ export interface EntryData {
   draft: boolean;
   wpId?: number;
   commentCount: number;
+  commentsOpen: boolean;
   upvotes: number;
   mood: string;
   images: string[];
@@ -37,6 +39,7 @@ interface RawEntry {
   title: string;
   date: string;
   description: string;
+  permalink?: string;
   tags: string[];
   categories: string[];
   cover: string;
@@ -44,6 +47,7 @@ interface RawEntry {
   draft: boolean;
   wpId: number | null;
   commentCount: number;
+  commentsOpen?: boolean;
   upvotes?: number;
   mood: string;
   images: string[];
@@ -64,6 +68,7 @@ function loadRaw(): ContentEntry[] {
       title: entry.title,
       date: new Date(entry.date),
       description: entry.description,
+      permalink: entry.permalink || "",
       tags: entry.tags,
       categories: entry.categories,
       cover: entry.cover,
@@ -71,6 +76,9 @@ function loadRaw(): ContentEntry[] {
       draft: entry.draft,
       wpId: entry.wpId ?? undefined,
       commentCount: entry.commentCount,
+      commentsOpen: entry.commentsOpen !== undefined
+        ? Boolean(entry.commentsOpen)
+        : (entry.kind !== "page" || entry.template === "message"),
       upvotes: entry.upvotes ?? 0,
       mood: entry.mood,
       images: entry.images,

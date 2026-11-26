@@ -4,7 +4,7 @@
 // then restores a clean local build.
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
-import { existsSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
@@ -57,8 +57,12 @@ const server = createServer((req, res) => {
   if (url.pathname === "/wp-json/argon-astro/v1/config") {
     return json({
       site: { title: "Headless Argon E2E" },
-      banner: { backgroundUrl: `${origin}/wp-content/uploads/2026/11/hero.png` },
-      sidebar: { authorImage: "https://cdn.invalid/avatar.png" },
+      banner: { backgroundUrl: "--bing--", toolbarMask: true },
+      toolbar: {
+        iconLink: `${origin}/`,
+        menu: [{ label: "关于我", href: `${origin}/aboutme.html`, icon: "fa fa-user-o", children: [] }],
+      },
+      sidebar: { authorImage: "https://cdn.invalid/avatar.png", bannerSubtitle: "--hitokoto--" },
       friendLinks: [{ name: "Ext", url: "https://ext.example", avatar: "https://cdn.invalid/friend.png" }],
       // Attempt to override comments.provider — must be ignored by compile-config.mjs.
       comments: { provider: "giscus" },
@@ -73,6 +77,7 @@ const server = createServer((req, res) => {
         {
           id: 101,
           slug: "headless-gutenberg",
+          permalink: "/archives/101.html",
           title: "Headless Gutenberg Post",
           date: "2026-11-25T00:00:00.000Z",
           modifiedDate: "2026-11-25T02:00:00.000Z",
@@ -116,14 +121,16 @@ const server = createServer((req, res) => {
       items: [
         {
           id: 201,
-          slug: "headless-about",
+          slug: "aboutme",
+          permalink: "/aboutme.html",
+          commentsOpen: true,
           title: "Headless About",
           date: "2026-11-20T00:00:00.000Z",
           excerpt: "About page",
           tags: [],
           categories: [],
           commentCount: 0,
-          content: "<!-- wp:paragraph --><p>Headless page body</p><!-- /wp:paragraph -->",
+          content: "<!-- wp:paragraph --><p>Headless page body [friendlinks]</p><!-- /wp:paragraph -->",
           media: [],
         },
       ],
@@ -180,16 +187,36 @@ try {
   const mergedConfig = JSON.parse(readFileSync(join(root, "src/generated/theme-config.json"), "utf8"));
   assert.equal(mergedConfig.site.title, "Headless Argon E2E");
   assert.equal(mergedConfig.comments.provider, "wordpress");
-  assert.match(mergedConfig.banner.backgroundUrl, /^\/media\/wp\//);
+  assert.equal(mergedConfig.banner.backgroundUrl, "--bing--");
+  assert.equal(mergedConfig.toolbar.iconLink, "/");
+  assert.equal(mergedConfig.toolbar.menu[0].href, "/aboutme.html");
   assert.equal(mergedConfig.sidebar.authorImage, "https://cdn.invalid/avatar.png");
   assert.equal("media" in mergedConfig, false);
 
-  // Verify downloaded media file exists and built post uses local /media/wp/ path.
-  const postHtml = readFileSync(join(root, "dist/posts/headless-gutenberg/index.html"), "utf8");
+  // Verify homepage resolved --bing--, --hitokoto--, toolbarMask, menu icon, and .html post link.
+  const indexHtml = readFileSync(join(root, "dist/index.html"), "utf8");
+  assert.match(indexHtml, /url\(\/api\/bing\)/);
+  assert.match(indexHtml, /<span class="hitokoto"><\/span>/);
+  assert.match(indexHtml, /#banner:after/);
+  assert.match(indexHtml, /fa fa-user-o/);
+  assert.match(indexHtml, /href="\/archives\/101\.html"/);
+
+  // Verify WordPress .html permalink emitted as a real file (not a directory) with .md mirror and rewritten media.
+  const postFile = join(root, "dist/archives/101.html");
+  assert.equal(statSync(postFile).isFile(), true, "WordPress .html permalink must be a flat file");
+  const postHtml = readFileSync(postFile, "utf8");
   assert.match(postHtml, /\/media\/wp\/10-hero\.png/);
   assert.match(postHtml, /collapse-block/);
   assert.equal(postHtml.includes(wpUrl), false);
   assert.equal(existsSync(join(root, "public/media/wp/10-hero.png")), true);
+  assert.equal(existsSync(join(root, "dist/archives/101.md")), true);
+
+  // Verify WordPress .html page emitted as a real file with friendlinks shortcode + comments form.
+  const aboutFile = join(root, "dist/aboutme.html");
+  assert.equal(statSync(aboutFile).isFile(), true, "WordPress page .html permalink must be a flat file");
+  const aboutHtml = readFileSync(aboutFile, "utf8");
+  assert.match(aboutHtml, /friend-link-container/);
+  assert.match(aboutHtml, /id="argon-comment-form"/);
 
   // Verify password-protected post body did not leak.
   const secretHtml = readFileSync(join(root, "dist/posts/secret-post/index.html"), "utf8");
