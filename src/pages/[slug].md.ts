@@ -6,7 +6,10 @@ import { renderEntryMarkdownDocument } from "../lib/agent/markdown-export.mjs";
 export function getStaticPaths() {
   const config = loadThemeConfig();
   if (!config.agent.enabled || !config.agent.markdownMirrors) return [];
-  return publishedPages().map((page) => ({ params: { slug: page.id }, props: { page } }));
+  const reserved = new Set(["posts", "shuoshuo", "archives", "tags", "categories", "search", "links", "page", "argon", "api", "media", "404"]);
+  return publishedPages()
+    .filter((page) => !reserved.has(page.id))
+    .map((page) => ({ params: { slug: page.id }, props: { page } }));
 }
 
 export const GET: APIRoute = ({ props }) => {

@@ -27,6 +27,52 @@ function isHttpUrl(value) {
   return typeof value === "string" && /^https?:\/\//i.test(value.trim());
 }
 
+function shouldMirrorUrl(value, origin) {
+  const url = String(value || "").trim();
+  if (!isHttpUrl(url)) return false;
+  if (!origin) return true;
+  try {
+    return new URL(url).origin === origin;
+  } catch {
+    return false;
+  }
+}
+
+function safeSlug(slug, fallback) {
+  let raw = String(slug || "").trim();
+  if (raw) {
+    try {
+      raw = decodeURIComponent(raw);
+    } catch {
+      // Keep raw slug if percent-encoding is malformed.
+    }
+  }
+  const clean = raw
+    .replace(/[\\/:"*?<>|\x00-\x1f]+/g, "-")
+    .replace(/^\.+|\.+$/g, "")
+    .trim();
+  if (!clean) return String(fallback || "entry");
+  if (Buffer.byteLength(clean, "utf8") > 180) {
+    const hash = createHash("sha1").update(clean).digest("hex").slice(0, 8);
+    return String(fallback || "entry") + "-" + hash;
+  }
+  return clean;
+}
+
+async function runWithConcurrency(items, concurrency, worker) {
+  if (!items.length) return;
+  let index = 0;
+  const limit = Math.max(1, Math.min(concurrency, items.length));
+  await Promise.all(
+    Array.from({ length: limit }, async () => {
+      while (index < items.length) {
+        const current = items[index++];
+        await worker(current);
+      }
+    }),
+  );
+}
+
 export function localMediaPath(id, sourceUrl) {
   const clean = String(sourceUrl || "").split("?")[0];
   const name = clean.split("/").pop() || "file";
@@ -65,51 +111,71 @@ export async function writeSnapshot(client, root) {
   const pages = await client.list("pages");
   const moments = await client.list("shuoshuo");
   const map = new Map();
+  const downloads = [];
+  const origin = typeof client.origin === "string" && client.origin.trim() ? client.origin.trim() : "";
 
-  const registerMedia = async (id, sourceUrl) => {
+  const registerMedia = (id, sourceUrl) => {
     const url = String(sourceUrl || "").trim();
-    if (!url || !isHttpUrl(url)) return url;
+    if (!shouldMirrorUrl(url, origin)) return url;
     if (map.has(url)) return map.get(url);
     const local = localMediaPath(id, url);
     map.set(url, local);
-    if (client.download) await client.download(url, join(root, "public" + local));
+    if (client.download) {
+      downloads.push({ url, target: join(root, "public" + local) });
+    }
     return local;
   };
 
+  for (const media of (config && Array.isArray(config.media) ? config.media : [])) {
+    registerMedia(media.id, media.sourceUrl);
+  }
+
   for (const item of [...posts, ...pages, ...moments]) {
     for (const media of item.media || []) {
-      await registerMedia(media.id, media.sourceUrl);
+      registerMedia(media.id, media.sourceUrl);
     }
     if (item.featuredMediaUrl) {
-      await registerMedia(item.featuredMediaId || 0, item.featuredMediaUrl);
+      registerMedia(item.featuredMediaId || 0, item.featuredMediaUrl);
     }
     for (const img of item.images || []) {
-      await registerMedia(0, img);
+      registerMedia(0, img);
     }
   }
 
   const remote = structuredClone(config || {});
   delete remote.comments;
   delete remote.source;
+  delete remote.media;
 
-  if (remote.banner && isHttpUrl(remote.banner.backgroundUrl)) {
-    remote.banner.backgroundUrl = await registerMedia(0, remote.banner.backgroundUrl);
+  if (remote.banner && shouldMirrorUrl(remote.banner.backgroundUrl, origin)) {
+    remote.banner.backgroundUrl = registerMedia(0, remote.banner.backgroundUrl);
   }
-  if (remote.background && isHttpUrl(remote.background.url)) {
-    remote.background.url = await registerMedia(0, remote.background.url);
+  if (remote.background && shouldMirrorUrl(remote.background.url, origin)) {
+    remote.background.url = registerMedia(0, remote.background.url);
   }
-  if (remote.background && isHttpUrl(remote.background.darkUrl)) {
-    remote.background.darkUrl = await registerMedia(0, remote.background.darkUrl);
+  if (remote.background && shouldMirrorUrl(remote.background.darkUrl, origin)) {
+    remote.background.darkUrl = registerMedia(0, remote.background.darkUrl);
   }
-  if (remote.sidebar && isHttpUrl(remote.sidebar.authorImage)) {
-    remote.sidebar.authorImage = await registerMedia(0, remote.sidebar.authorImage);
+  if (remote.toolbar && shouldMirrorUrl(remote.toolbar.icon, origin)) {
+    remote.toolbar.icon = registerMedia(0, remote.toolbar.icon);
+  }
+  if (remote.sidebar && shouldMirrorUrl(remote.sidebar.authorImage, origin)) {
+    remote.sidebar.authorImage = registerMedia(0, remote.sidebar.authorImage);
+  }
+  if (remote.article && shouldMirrorUrl(remote.article.donateQr, origin)) {
+    remote.article.donateQr = registerMedia(0, remote.article.donateQr);
   }
   if (Array.isArray(remote.friendLinks)) {
     for (const link of remote.friendLinks) {
-      if (link && isHttpUrl(link.avatar)) {
-        link.avatar = await registerMedia(0, link.avatar);
+      if (link && shouldMirrorUrl(link.avatar, origin)) {
+        link.avatar = registerMedia(0, link.avatar);
       }
     }
+  }
+
+  if (client.download && downloads.length > 0) {
+    const concurrency = Number(client.concurrency) > 0 ? Number(client.concurrency) : 6;
+    await runWithConcurrency(downloads, concurrency, ({ url, target }) => client.download(url, target));
   }
 
   const rewriteUrl = (url) => {
@@ -120,7 +186,7 @@ export async function writeSnapshot(client, root) {
 
   const ctx = createContext({
     rewriteUrl,
-    posts: posts.map((item) => ({ id: item.slug || String(item.id), title: item.title })),
+    posts: posts.map((item) => ({ id: safeSlug(item.slug, item.id), title: item.title })),
     categories: [...new Set(posts.flatMap((item) => item.categories || []))],
     tags: [...new Set(posts.flatMap((item) => item.tags || []))],
   });
@@ -165,7 +231,7 @@ export async function writeSnapshot(client, root) {
         template: kind === "pages" ? (item.template || "page") : (item.template || ""),
         locked,
       };
-      writeFileSync(join(dir, (item.slug || item.id) + ".md"), frontMatter(matter) + rewritten);
+      writeFileSync(join(dir, safeSlug(item.slug, item.id) + ".md"), frontMatter(matter) + rewritten);
     }
   };
 
@@ -179,8 +245,8 @@ export async function writeSnapshot(client, root) {
     tags: ctx.tags,
   }, null, 2));
   writeFileSync(join(root, ".cache", "content", "media-manifest.json"), JSON.stringify([...map.entries()], null, 2));
-  writeFileSync(marker, JSON.stringify({ writtenAt: new Date().toISOString(), posts: posts.length, pages: pages.length, shuoshuo: moments.length }));
-  return { posts: posts.length, pages: pages.length, shuoshuo: moments.length };
+  writeFileSync(marker, JSON.stringify({ writtenAt: new Date().toISOString(), posts: posts.length, pages: pages.length, shuoshuo: moments.length, media: downloads.length }));
+  return { posts: posts.length, pages: pages.length, shuoshuo: moments.length, media: downloads.length };
 }
 
 export function snapshotFailed(root) {

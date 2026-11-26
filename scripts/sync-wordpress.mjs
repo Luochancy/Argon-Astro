@@ -22,13 +22,20 @@ if (decision.action === "fail") {
 }
 const auth = "Basic " + Buffer.from(user + ":" + password).toString("base64");
 const wpOrigin = new URL(url).origin;
+const syncUserAgent = "Argon-Astro-Sync/1.0";
 
 const client = {
+  origin: wpOrigin,
+  concurrency: 6,
   async getJson(path) {
     const response = await fetch(url.replace(/\/$/, "") + "/wp-json/argon-astro/v1" + path, {
-      headers: { authorization: auth, accept: "application/json" },
+      headers: {
+        authorization: auth,
+        accept: "application/json",
+        "user-agent": syncUserAgent,
+      },
     });
-    if (!response.ok) throw new Error("Headless request failed: " + response.status);
+    if (!response.ok) throw new Error("Headless request failed: " + response.status + " (" + path + ")");
     return response.json();
   },
   async list(kind) {
@@ -45,16 +52,21 @@ const client = {
   },
   async download(sourceUrl, target) {
     if (existsSync(target)) return;
-    const headers = {};
+    const headers = { "user-agent": syncUserAgent };
+    let safeDetail = "";
     try {
-      if (new URL(sourceUrl).origin === wpOrigin) {
+      const parsed = new URL(sourceUrl);
+      if (parsed.origin === wpOrigin) {
         headers.authorization = auth;
+        safeDetail = " (same-origin " + parsed.pathname + ")";
+      } else {
+        safeDetail = " (external " + parsed.host + parsed.pathname + ")";
       }
     } catch {
       // Ignore malformed URLs; fetch will report the error.
     }
     const response = await fetch(sourceUrl, { headers });
-    if (!response.ok) throw new Error("Media download failed: " + response.status);
+    if (!response.ok) throw new Error("Media download failed: " + response.status + safeDetail);
     mkdirSync(dirname(target), { recursive: true });
     writeFileSync(target, Buffer.from(await response.arrayBuffer()));
   },

@@ -7,7 +7,7 @@ import { renderCommentList } from "../lib/comments/render.mjs";
 import { entryMarkdownPath } from "../lib/agent/markdown-export.mjs";
 
 export function getStaticPaths() {
-  const reserved = new Set(["posts", "shuoshuo", "archives", "tags", "categories", "search", "links", "page", "argon", "api", "media"]);
+  const reserved = new Set(["posts", "shuoshuo", "archives", "tags", "categories", "search", "links", "page", "argon", "api", "media", "404"]);
   return publishedPages()
     .filter((page) => !reserved.has(page.id))
     .map((page) => ({ params: { slug: page.id }, props: { page } }));

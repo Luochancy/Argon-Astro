@@ -7,6 +7,7 @@ import { writeSnapshot, snapshotFailed } from "../src/lib/wordpress/snapshot.mjs
 const root = mkdtempSync(join(tmpdir(), "argon-snapshot-"));
 const downloaded = [];
 const client = {
+  origin: "https://cms.example",
   async getJson() {
     return {
       version: 1,
@@ -16,8 +17,14 @@ const client = {
         url: "https://cms.example/uploads/bg-light.png",
         darkUrl: "https://cms.example/uploads/bg-dark.png",
       },
-      sidebar: { authorImage: "https://cms.example/uploads/avatar.webp" },
-      friendLinks: [{ name: "Friend", url: "https://friend.example", avatar: "https://cms.example/uploads/friend.png" }],
+      toolbar: { icon: "https://cms.example/uploads/logo.png" },
+      sidebar: { authorImage: "https://cdn.example/avatar.webp" },
+      article: { donateQr: "https://cms.example/uploads/donate.png" },
+      friendLinks: [
+        { name: "LocalFriend", url: "https://friend.example", avatar: "https://cms.example/uploads/friend.png" },
+        { name: "ExtFriend", url: "https://ext.example", avatar: "https://cdn.example/ext-avatar.png" },
+      ],
+      media: [{ id: 12, sourceUrl: "https://cms.example/uploads/banner hero.jpg" }],
     };
   },
   async list(kind) {
@@ -56,7 +63,7 @@ const client = {
     if (kind === "pages") {
       return [{
         id: 20,
-        slug: "about",
+        slug: "%E5%85%B3%E4%BA%8E",
         title: "About",
         date: "2026-11-10T00:00:00.000Z",
         excerpt: "about",
@@ -75,7 +82,7 @@ const client = {
         upvotes: 4,
         raw: "<p>hello</p>",
         media: [],
-        images: ["https://cms.example/uploads/shot 1.png"],
+        images: ["https://cms.example/uploads/shot 1.png", "https://cdn.example/external-shot.png"],
       }];
     }
     return [];
@@ -101,23 +108,29 @@ assert.equal(post.includes("template:"), false, "posts should not get page templ
 assert.equal(post.includes("<ol class=\"comment-list\">"), false, "comments HTML must not be appended to markdown body");
 assert.equal(post.includes("a-1024x768.jpg"), false, "resized WP image URL must be rewritten");
 
-const page = readFileSync(join(root, ".cache", "content", "pages", "about.md"), "utf8");
+const page = readFileSync(join(root, ".cache", "content", "pages", "关于.md"), "utf8");
 assert.match(page, /template: "page"/);
 
 const moment = readFileSync(join(root, ".cache", "content", "shuoshuo", "moment-1.md"), "utf8");
 assert.equal(moment.includes("https://cms.example"), false, "shuoshuo image must be rewritten");
 assert.match(moment, /\/media\/wp\/[a-f0-9]{8}-shot-1\.png/);
+assert.equal(moment.includes("https://cdn.example/external-shot.png"), true, "external shuoshuo image must stay untouched");
 assert.match(moment, /sticky: true/);
 assert.match(moment, /upvotes: 4/);
 
 const theme = JSON.parse(readFileSync(join(root, ".cache", "wp-theme.json"), "utf8"));
 assert.equal(JSON.stringify(theme).includes("https://cms.example"), false, "theme config images must be rewritten");
-assert.match(theme.banner.backgroundUrl, /^\/media\/wp\/[a-f0-9]{8}-banner-hero\.jpg$/);
+assert.equal("media" in theme, false, "config.media must be stripped from wp-theme.json");
+assert.match(theme.banner.backgroundUrl, /^\/media\/wp\/12-banner-hero\.jpg$/);
 assert.match(theme.background.url, /^\/media\/wp\//);
 assert.match(theme.background.darkUrl, /^\/media\/wp\//);
-assert.match(theme.sidebar.authorImage, /^\/media\/wp\//);
+assert.match(theme.toolbar.icon, /^\/media\/wp\//);
+assert.match(theme.article.donateQr, /^\/media\/wp\//);
+assert.equal(theme.sidebar.authorImage, "https://cdn.example/avatar.webp", "external CDN avatar must not be mirrored");
 assert.match(theme.friendLinks[0].avatar, /^\/media\/wp\//);
-assert.equal(downloaded.length, 7);
+assert.equal(theme.friendLinks[1].avatar, "https://cdn.example/ext-avatar.png", "external friend avatar must not be mirrored");
+assert.equal(downloaded.some((d) => d.sourceUrl.includes("cdn.example")), false, "external CDN URLs must never be downloaded");
+assert.equal(downloaded.length, 8);
 
 snapshotFailed(root);
 assert.equal(existsSync(join(root, ".cache", "snapshot-complete.json")), false);

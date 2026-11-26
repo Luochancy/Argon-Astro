@@ -58,6 +58,8 @@ const server = createServer((req, res) => {
     return json({
       site: { title: "Headless Argon E2E" },
       banner: { backgroundUrl: `${origin}/wp-content/uploads/2026/11/hero.png` },
+      sidebar: { authorImage: "https://cdn.invalid/avatar.png" },
+      friendLinks: [{ name: "Ext", url: "https://ext.example", avatar: "https://cdn.invalid/friend.png" }],
       // Attempt to override comments.provider — must be ignored by compile-config.mjs.
       comments: { provider: "giscus" },
       media: [{ id: 10, sourceUrl: `${origin}/wp-content/uploads/2026/11/hero.png`, filename: "hero.png" }],
@@ -179,6 +181,8 @@ try {
   assert.equal(mergedConfig.site.title, "Headless Argon E2E");
   assert.equal(mergedConfig.comments.provider, "wordpress");
   assert.match(mergedConfig.banner.backgroundUrl, /^\/media\/wp\//);
+  assert.equal(mergedConfig.sidebar.authorImage, "https://cdn.invalid/avatar.png");
+  assert.equal("media" in mergedConfig, false);
 
   // Verify downloaded media file exists and built post uses local /media/wp/ path.
   const postHtml = readFileSync(join(root, "dist/posts/headless-gutenberg/index.html"), "utf8");
