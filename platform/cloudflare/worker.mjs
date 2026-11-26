@@ -16,8 +16,10 @@ import {
   buildServerlessDocResponse,
   getServerlessDocText,
 } from "../../src/lib/agent/serverless-docs.mjs";
+import { resolveTaxonomyAliasPath } from "../../src/lib/content/taxonomies.mjs";
 
 const seenNonces = new Set();
+let cachedTaxonomyMap = null;
 
 function normalizeApiPath(pathname) {
   return pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
@@ -65,6 +67,24 @@ async function handleBingWallpaper(request) {
   return new Response("Bing wallpaper unavailable.", { status: 502 });
 }
 
+async function loadTaxonomyMap(url, env) {
+  if (cachedTaxonomyMap) return cachedTaxonomyMap;
+  if (!env.ASSETS || typeof env.ASSETS.fetch !== "function") return null;
+  try {
+    const res = await env.ASSETS.fetch(new Request(new URL("/argon-taxonomies.json", url.origin).toString()));
+    if (res.ok) {
+      const parsed = await res.json();
+      if (parsed && typeof parsed === "object" && (parsed.tags || parsed.categories)) {
+        cachedTaxonomyMap = parsed;
+        return cachedTaxonomyMap;
+      }
+    }
+  } catch {
+    // Ignore when taxonomy manifest is not present.
+  }
+  return null;
+}
+
 async function fetchStaticAsset(request, url, env) {
   const direct = await env.ASSETS.fetch(request);
   if (direct.status !== 404) return direct;
@@ -86,6 +106,19 @@ async function fetchStaticAsset(request, url, env) {
       if (htmlRes.status !== 404) return htmlRes;
     }
   }
+
+  // Legacy WordPress taxonomy aliases (/archives/tag/cuda, /archive/tag/cuda, /tag/cuda, /archives/category/...).
+  const taxMap = await loadTaxonomyMap(url, env);
+  const resolvedTax = resolveTaxonomyAliasPath(pathname, taxMap);
+  if (resolvedTax) {
+    const targetUrl = new URL(resolvedTax + "index.html", url.origin);
+    const targetRes = await env.ASSETS.fetch(new Request(targetUrl.toString(), { method: request.method, headers: request.headers }));
+    if (targetRes.status !== 404) return targetRes;
+    const altUrl = new URL(resolvedTax, url.origin);
+    const altRes = await env.ASSETS.fetch(new Request(altUrl.toString(), { method: request.method, headers: request.headers }));
+    if (altRes.status !== 404) return altRes;
+  }
+
   return direct;
 }
 

@@ -198,6 +198,10 @@ export interface ThemeConfig {
     gravatarCdn: string;
   };
   friendLinks: FriendLink[];
+  taxonomies?: {
+    tags?: { name: string; slug: string; permalink?: string }[];
+    categories?: { name: string; slug: string; permalink?: string }[];
+  };
   agent: {
     enabled: boolean;
     robotsTxt: boolean;

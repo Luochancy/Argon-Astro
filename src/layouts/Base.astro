@@ -33,7 +33,7 @@ const pageTitle = title
   ? title + " - " + config.site.title
   : (home && config.site.description ? config.site.title + " - " + config.site.description : config.site.title);
 const pageDescription = description || config.site.description;
-const faviconUrl = config.site.icon || config.toolbar.icon || "";
+const faviconUrl = config.site.icon || (config.toolbar.icon && config.toolbar.icon !== "/argon/toolbar-icon.svg" ? config.toolbar.icon : "");
 const classes = htmlClass(config, home ? ["is-home"] : []);
 const colorStyle = themeColorStyle(config.appearance.color, config.appearance.cardRadius);
 const backgroundCss = pageBackgroundCss(config.background);

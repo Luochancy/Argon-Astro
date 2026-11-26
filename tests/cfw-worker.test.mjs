@@ -66,6 +66,18 @@ const mockAssets = {
         headers: { "content-type": "text/markdown" },
       });
     }
+    if (p === "/argon-taxonomies.json") {
+      return new Response(JSON.stringify({
+        tags: { cuda: "/tags/CUDA/", "luocy-cloud": "/tags/Luocy%20Cloud/" },
+        categories: { "赛博文学": "/categories/%E8%B5%9B%E5%8D%9A%E6%96%87%E5%AD%A6/" },
+      }), { status: 200, headers: { "content-type": "application/json" } });
+    }
+    if (p === "/tags/CUDA/index.html" || p === "/categories/%E8%B5%9B%E5%8D%9A%E6%96%87%E5%AD%A6/index.html") {
+      return new Response("<!doctype html><html><body>TAXONOMY</body></html>", {
+        status: 200,
+        headers: { "content-type": "text/html; charset=utf-8" },
+      });
+    }
     return new Response("Not Found", { status: 404 });
   },
 };
@@ -174,5 +186,20 @@ assert.equal(dirIndex.status, 200);
 const dirRedirect = await worker.fetch(new Request("https://blog.example/dir-route"), { ASSETS: mockAssets });
 assert.equal(dirRedirect.status, 308);
 assert.equal(dirRedirect.headers.get("location"), "https://blog.example/dir-route/");
+
+// 13. Legacy WordPress taxonomy aliases (/archives/tag/cuda, /archive/tag/cuda, /tag/cuda, /tags/cuda, /archives/category/...)
+for (const alias of [
+  "/archives/tag/cuda",
+  "/archives/tag/cuda/",
+  "/archive/tag/cuda",
+  "/tag/cuda",
+  "/tags/cuda/",
+  "/archives/category/" + encodeURIComponent("赛博文学"),
+  "/archive/category/" + encodeURIComponent("赛博文学") + "/",
+]) {
+  const res = await worker.fetch(new Request("https://blog.example" + alias), { ASSETS: mockAssets });
+  assert.equal(res.status, 200, `taxonomy alias ${alias} should return 200`);
+  assert.match(await res.text(), /TAXONOMY/);
+}
 
 console.log("cfw worker ok");

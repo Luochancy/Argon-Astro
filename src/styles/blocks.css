@@ -98,13 +98,15 @@ html.darkmode .shuoshuo-preview-meta .shuoshuo-upvote {
     margin-top: 24px;
   }
 
-  .shuoshuo-preview-container:before {
-    left: 14px !important;
-    top: -15px !important;
-    width: 30px !important;
-    height: 30px !important;
-    line-height: 30px !important;
-    font-size: 16px !important;
+  .shuoshuo-preview-container:before,
+  .shuoshuo-preview-container:hover:before {
+    left: 16px !important;
+    top: -16px !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    background-position: center center !important;
+    background-size: 46% !important;
   }
 
   .shuoshuo-preview-meta {

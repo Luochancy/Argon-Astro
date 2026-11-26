@@ -35,3 +35,12 @@
 .additional-content-after-post p {
   margin-bottom: 0.5rem;
 }
+
+/* Match upstream Argon headIndex behavior: collapse inactive catalog subtrees. */
+#leftbar_catalog .index-subItem-box {
+  display: none;
+}
+
+#leftbar_catalog .index-subItem-box.open {
+  display: block;
+}

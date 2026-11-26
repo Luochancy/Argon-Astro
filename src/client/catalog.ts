@@ -71,6 +71,7 @@ export function bindCatalog(signal?: AbortSignal): void {
       "click",
       (event) => {
         event.preventDefault();
+        setActive(index, false);
         const top = heading.getBoundingClientRect().top + window.scrollY - 80;
         window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
         document.documentElement.classList.remove("leftbar-opened");
@@ -108,28 +109,50 @@ export function bindCatalog(signal?: AbortSignal): void {
   box.replaceChildren(rootList);
 
   const scrollBox = document.getElementById("leftbar_part2_inner");
-  let lastActive = -1;
+  let lastActive = -2;
+
+  const setActive = (active: number, autoScroll = true) => {
+    const resolved = active >= 0 ? active : (items.length > 0 ? 0 : -1);
+    if (resolved === lastActive) return;
+    lastActive = resolved;
+
+    items.forEach((item, index) => {
+      item.classList.toggle("current", index === resolved);
+    });
+
+    // Match upstream headIndex: collapse all sub-boxes except the active item's subtree & ancestors.
+    rootList.querySelectorAll<HTMLUListElement>("ul.index-subItem-box.open").forEach((ul) => {
+      ul.classList.remove("open");
+    });
+
+    if (resolved >= 0) {
+      const activeEl = items[resolved];
+      const childSub = activeEl.querySelector<HTMLUListElement>(":scope > ul.index-subItem-box");
+      if (childSub) childSub.classList.add("open");
+
+      let parent: HTMLElement | null = activeEl.parentElement;
+      while (parent && parent !== rootList) {
+        if (parent.matches("ul.index-subItem-box")) {
+          parent.classList.add("open");
+        }
+        parent = parent.parentElement;
+      }
+
+      if (autoScroll && scrollBox && scrollBox.scrollHeight > scrollBox.clientHeight) {
+        const boxRect = scrollBox.getBoundingClientRect();
+        const itemRect = activeEl.getBoundingClientRect();
+        const relTop = itemRect.top - boxRect.top + scrollBox.scrollTop;
+        const targetScroll = relTop - scrollBox.clientHeight * 0.35;
+        scrollBox.scrollTo({ top: Math.max(0, targetScroll), behavior: "smooth" });
+      }
+    }
+  };
 
   const mark = () => {
     const scrollY = window.scrollY;
     const offsets = headings.map((heading) => heading.getBoundingClientRect().top + scrollY);
     const active = activeHeadingIndex(offsets, scrollY);
-
-    if (active === lastActive) return;
-    lastActive = active;
-
-    items.forEach((item, index) => {
-      item.classList.toggle("current", index === active);
-    });
-
-    if (active >= 0 && scrollBox && scrollBox.scrollHeight > scrollBox.clientHeight) {
-      const activeEl = items[active];
-      const boxRect = scrollBox.getBoundingClientRect();
-      const itemRect = activeEl.getBoundingClientRect();
-      const relTop = itemRect.top - boxRect.top + scrollBox.scrollTop;
-      const targetScroll = relTop - scrollBox.clientHeight * 0.35;
-      scrollBox.scrollTo({ top: Math.max(0, targetScroll), behavior: "smooth" });
-    }
+    setActive(active, true);
   };
 
   window.addEventListener("scroll", mark, { passive: true, signal });
