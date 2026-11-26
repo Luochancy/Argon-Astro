@@ -47,6 +47,13 @@ if (source === "wordpress" && existsSync(remotePath)) {
   }
 }
 
+const envSiteUrl = String(process.env.ARGON_SITE_URL || process.env.SITE_URL || "").trim().replace(/\/+$/, "");
+if (/^https?:\/\//i.test(envSiteUrl)) {
+  compiled.site = { ...(isRecord(compiled.site) ? compiled.site : {}), url: envSiteUrl };
+} else if (isRecord(compiled.site) && typeof compiled.site.url === "string") {
+  compiled.site = { ...compiled.site, url: compiled.site.url.trim().replace(/\/+$/, "") };
+}
+
 const outDir = join(root, "src/generated");
 mkdirSync(outDir, { recursive: true });
 writeFileSync(join(outDir, "theme-config.json"), JSON.stringify(compiled, null, 2));

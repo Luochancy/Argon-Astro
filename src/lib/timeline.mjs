@@ -1,3 +1,5 @@
+import { dateParts } from "./date-format.mjs";
+
 const EN_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 function formatMonthLabel(month, language) {
@@ -8,7 +10,7 @@ function formatMonthLabel(month, language) {
 }
 
 /** Render upstream-compatible Argon archive timeline with optional Chinese/English month headers. */
-export function renderTimeline(posts, showMonth = true, archivesUrl = "/archives/", language = "en") {
+export function renderTimeline(posts, showMonth = true, archivesUrl = "/archives/", language = "en", timeZone = "") {
   const sorted = [...posts].sort((a, b) => new Date(b.date) - new Date(a.date));
   let html = "<div class=\"argon-timeline archive-timeline\">";
   let lastYear = 0;
@@ -18,9 +20,10 @@ export function renderTimeline(posts, showMonth = true, archivesUrl = "/archives
     : String(archivesUrl || "/archives/").replace(/\/$/, "") + "/";
 
   for (const post of sorted) {
-    const date = new Date(post.date);
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
+    const parts = dateParts(post.date, timeZone);
+    if (!parts) continue;
+    const year = Number(parts.year);
+    const month = parts.monthNum;
     if (year !== lastYear) {
       const yearHref = cleanBase + "#year-" + year;
       html += "<div class=\"argon-timeline-node\"><h2 class=\"argon-timeline-time archive-timeline-year\" id=\"year-" + year + "\"><a href=\"" + yearHref + "\">" + year + "</a></h2><div class=\"argon-timeline-card card bg-gradient-secondary archive-timeline-title\"></div></div>";
@@ -33,7 +36,7 @@ export function renderTimeline(posts, showMonth = true, archivesUrl = "/archives
       html += "<div class=\"argon-timeline-node\"><h3 class=\"argon-timeline-time archive-timeline-month" + (lastMonth === 0 ? " first-month-of-year" : "") + "\" id=\"" + monthId + "\"><a href=\"#" + monthId + "\">" + label + "</a></h3><div class=\"argon-timeline-card card bg-gradient-secondary archive-timeline-title\"></div></div>";
       lastMonth = month;
     }
-    const day = String(date.getMonth() + 1).padStart(2, "0") + "-" + String(date.getDate()).padStart(2, "0");
+    const day = parts.month + "-" + parts.day;
     html += "<div class=\"argon-timeline-node\"><div class=\"argon-timeline-time\">" + day + "</div><div class=\"argon-timeline-card card bg-gradient-secondary archive-timeline-title\"><a href=\"" + post.href + "\">" + escapeHtml(post.title) + "</a></div></div>";
   }
   return html + "</div>";

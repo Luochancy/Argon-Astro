@@ -1,5 +1,6 @@
 // Generate llmstxt.org compliant /llms.txt, /llms-full.txt, and /agent-index.json.
 import { wordCount, readingTime } from "../reading-time.mjs";
+import { formatDate, resolveTimeZone } from "../date-format.mjs";
 import {
   entryCanonicalPath,
   entryMarkdownPath,
@@ -12,15 +13,14 @@ function absUrl(siteUrl, path) {
   return base ? base + path : path;
 }
 
-function formatDateYmd(date) {
-  const d = date instanceof Date ? date : new Date(date);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toISOString().slice(0, 10);
+function formatDateYmd(date, timeZone = "") {
+  return formatDate(date, "YMD", timeZone);
 }
 
 /** Generate standard /llms.txt site directory for AI agents and LLM browsers. */
 export function buildLlmsTxt(config, entries) {
   const siteUrl = config.site?.url || "";
+  const timeZone = resolveTimeZone(config);
   const title = config.site?.title || "Argon";
   const description = config.site?.description || "";
   const posts = entries.filter((e) => e.kind === "post");
@@ -47,7 +47,7 @@ export function buildLlmsTxt(config, entries) {
     lines.push("", "## Posts");
     for (const post of posts) {
       const mdUrl = absUrl(siteUrl, config.agent?.markdownMirrors !== false ? entryMarkdownPath(post) : entryCanonicalPath(post));
-      const date = formatDateYmd(post.data.date);
+      const date = formatDateYmd(post.data.date, timeZone);
       const summary = post.data.locked
         ? "Password-protected post (content redacted)"
         : (post.data.description || htmlToAgentMarkdown(post.html).slice(0, 120).replace(/\s+/g, " "));
@@ -61,7 +61,7 @@ export function buildLlmsTxt(config, entries) {
     for (const item of moments) {
       const mdUrl = absUrl(siteUrl, config.agent?.markdownMirrors !== false ? entryMarkdownPath(item) : entryCanonicalPath(item));
       const label = item.data.title || `Shuoshuo ${item.id}`;
-      const date = formatDateYmd(item.data.date);
+      const date = formatDateYmd(item.data.date, timeZone);
       const summary = htmlToAgentMarkdown(item.html).slice(0, 100).replace(/\s+/g, " ");
       lines.push(`- [${label}](${mdUrl})${date ? ` (${date})` : ""}: ${summary}`);
     }
@@ -82,6 +82,7 @@ export function buildLlmsTxt(config, entries) {
 /** Generate /llms-full.txt concatenating clean Markdown of all public entries. */
 export function buildLlmsFullTxt(config, entries) {
   const siteUrl = config.site?.url || "";
+  const timeZone = resolveTimeZone(config);
   const title = config.site?.title || "Argon";
   const header = [
     `# ${title} — Full Corpus for AI Agents`,

@@ -5,14 +5,15 @@ import { loadThemeConfig } from "../config/load";
 import { publishedPosts } from "../lib/content/queries";
 import { entryUrl } from "../lib/content/urls.mjs";
 import { renderTimeline } from "../lib/timeline.mjs";
-import { formatDate } from "../lib/date-format.mjs";
+import { formatDate, resolveTimeZone } from "../lib/date-format.mjs";
 import { t } from "../lib/i18n";
 
 const config = loadThemeConfig();
 const lang = config.site.language;
+const timeZone = resolveTimeZone(config);
 const isZh = lang.toLowerCase().startsWith("zh");
 const posts = publishedPosts();
-const latestDate = posts.length > 0 ? formatDate(posts[0].data.date, config.site.dateFormat) : "";
+const latestDate = posts.length > 0 ? formatDate(posts[0].data.date, config.site.dateFormat, timeZone) : "";
 const html = renderTimeline(
   posts.map((post) => ({
     title: post.data.title,
@@ -22,6 +23,7 @@ const html = renderTimeline(
   config.article.timelineShowMonth !== false,
   config.article.archivesUrl,
   lang,
+  timeZone,
 );
 ---
 <Base title={t(lang, "archives")} catalog>

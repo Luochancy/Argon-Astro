@@ -2,7 +2,7 @@
 import type { ThemeConfig } from "../config/types";
 import type { PostEntry } from "../lib/content/queries";
 import { articleMeta } from "../lib/article-meta.mjs";
-import { formatDate } from "../lib/date-format.mjs";
+import { formatDateTime, formatDateTimeSeconds, resolveTimeZone } from "../lib/date-format.mjs";
 import { readingTime, wordCount } from "../lib/reading-time.mjs";
 import { t } from "../lib/i18n";
 
@@ -14,8 +14,14 @@ interface Props {
 const { post, config } = Astro.props;
 const lang = config.site.language;
 const isZh = lang.toLowerCase().startsWith("zh");
-const date = formatDate(post.data.date, config.site.dateFormat);
-const modifiedDate = post.data.modifiedDate ? formatDate(post.data.modifiedDate, config.site.dateFormat) : "";
+const timeZone = resolveTimeZone(config);
+const date = formatDateTime(post.data.date, config.site.dateFormat, timeZone);
+const dateFull = formatDateTimeSeconds(post.data.date, config.site.dateFormat, timeZone);
+const modifiedDate = post.data.modifiedDate ? formatDateTime(post.data.modifiedDate, config.site.dateFormat, timeZone) : "";
+const modifiedFull = post.data.modifiedDate ? formatDateTimeSeconds(post.data.modifiedDate, config.site.dateFormat, timeZone) : "";
+const timeTitle = isZh
+  ? `发布于 ${dateFull}${modifiedFull ? ` | 编辑于 ${modifiedFull}` : ""}`
+  : `Published ${dateFull}${modifiedFull ? ` | Edited ${modifiedFull}` : ""}`;
 
 const meta = articleMeta(
   config.article.meta,
@@ -68,13 +74,13 @@ const reading = showReading
       {entry.kind === "meta" && entry.item.key === "time" && (
         <div class="post-meta-detail post-meta-detail-time">
           <i class="fa fa-clock-o" aria-hidden="true"></i>
-          <time datetime={post.data.date.toISOString()} title={date}>{entry.item.text}</time>
+          <time datetime={post.data.date.toISOString()} title={timeTitle}>{entry.item.text}</time>
         </div>
       )}
       {entry.kind === "meta" && entry.item.key === "edittime" && (
         <div class="post-meta-detail post-meta-detail-edittime">
           <i class="fa fa-pencil" aria-hidden="true"></i>
-          <time datetime={post.data.modifiedDate?.toISOString() || ""} title={modifiedDate}>{entry.item.text}</time>
+          <time datetime={post.data.modifiedDate?.toISOString() || ""} title={timeTitle}>{entry.item.text}</time>
         </div>
       )}
       {entry.kind === "meta" && entry.item.key === "views" && (

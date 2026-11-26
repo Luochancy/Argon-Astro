@@ -4,7 +4,17 @@ import { join } from "node:path";
 
 const root = join(import.meta.dirname, "..");
 const dist = join(root, "dist");
-const host = process.env.WP_URL ? new URL(process.env.WP_URL).host : "";
+let siteHost = "";
+try {
+  const cfg = JSON.parse(readFileSync(join(root, "src/generated/theme-config.json"), "utf8"));
+  if (cfg?.site?.url && /^https?:\/\//i.test(cfg.site.url)) {
+    siteHost = new URL(cfg.site.url).host;
+  }
+} catch {
+  // Ignore if theme-config.json is unavailable.
+}
+const wpHost = process.env.WP_URL ? new URL(process.env.WP_URL).host : "";
+const host = wpHost && wpHost !== siteHost ? wpHost : "";
 const forbidden = ["wp-json", "wp-admin", "admin-ajax.php", host].filter(Boolean);
 
 function statSafe(path: string): boolean {

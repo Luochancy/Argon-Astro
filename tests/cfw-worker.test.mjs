@@ -256,6 +256,17 @@ const viewsGet = await handleViews(
 assert.equal(viewsGet.status, 200);
 assert.equal((await viewsGet.json()).views, 42);
 
+const viewsBatch = await handleViews(
+  new Request("https://blog.example/api/views?ids=101,102"),
+  { WP_URL: "https://cms.secret", WP_USER: "bot", WP_APP_PASSWORD: "pw" },
+  async (url) => {
+    assert.equal(url, "https://cms.secret/wp-json/argon-astro/v1/views?ids=101,102");
+    return new Response(JSON.stringify({ views: { "101": 42, "102": 99 } }), { status: 200 });
+  },
+);
+assert.equal(viewsBatch.status, 200);
+assert.deepEqual((await viewsBatch.json()).views, { "101": 42, "102": 99 });
+
 const viewsPost = await handleViews(
   new Request("https://blog.example/api/views", {
     method: "POST",

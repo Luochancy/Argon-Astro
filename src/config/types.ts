@@ -33,6 +33,7 @@ export interface ThemeConfig {
     description: string;
     url: string;
     language: string;
+    timezone?: string;
     keywords: string;
     icon?: string;
     dateFormat: "YMD" | "MDY" | "DMY";

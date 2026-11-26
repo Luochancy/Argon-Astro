@@ -25,7 +25,7 @@ const visuals: Record<string, ShareVisual> = {
 };
 ---
 <div id="share_container">
-  <div id="share" data-initialized="true">
+  <div id="share" data-initialized="true" data-share-title={title}>
     {links.map((link) => {
       const visual = visuals[link.id] ?? { tooltip: link.id, btnClass: "btn btn-icon btn-primary", iconClass: "fa fa-share-alt" };
       return (

@@ -6,6 +6,7 @@ site:
   description: A clean static blog powered by Argon.
   url: https://example.com
   language: zh-CN
+  timezone: Asia/Shanghai
   keywords: Argon, Blog
   dateFormat: YMD # YMD | MDY | DMY
 
@@ -93,7 +94,7 @@ sidebar:
 article:
   listLayout: "1" # "1" | "2" | "3"
   waterflow: "1" # "1" | "2" | "3" | "2and3"
-  meta: [time, categories, comments]
+  meta: [time, views, comments, categories]
   hideCategories: false
   showReadingTime: true
   readingSpeed: 300

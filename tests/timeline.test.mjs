@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { renderTimeline } from "../src/lib/timeline.mjs";
+import { dateParts, formatDateTime } from "../src/lib/date-format.mjs";
+
+// Timezone-aware formatting must shift UTC instants into the configured site timezone (never stuck in CI UTC).
+assert.equal(formatDateTime("2026-11-25T18:30:00.000Z", "YMD", "Asia/Shanghai"), "2026-11-26 02:30");
+assert.equal(formatDateTime("2026-11-25T18:30:00.000Z", "YMD", "+08:00"), "2026-11-26 02:30");
+assert.equal(formatDateTime("2026-11-25T18:30:00.000Z", "YMD", "UTC"), "2026-11-25 18:30");
+const shParts = dateParts("2026-06-25T04:44:00.000Z", "Asia/Shanghai");
+assert.equal(shParts.hm, "12:44");
 
 const sample = [
   { title: "Older", href: "/posts/older/", date: "2025-01-02T00:00:00.000Z" },

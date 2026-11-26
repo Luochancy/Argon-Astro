@@ -42,7 +42,12 @@ function safeAuthorHref(url?: string): string {
 
 function formatCommentDate(raw?: string): string {
   if (!raw) return "";
-  const d = new Date(raw);
+  const trimmed = raw.trim();
+  // WordPress mysql_to_rfc3339(comment_date_gmt) omits the trailing 'Z'; treat naive GMT strings as UTC.
+  const iso = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2})?$/.test(trimmed)
+    ? trimmed.replace(" ", "T") + "Z"
+    : trimmed;
+  const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return raw;
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;

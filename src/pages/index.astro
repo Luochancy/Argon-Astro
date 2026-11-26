@@ -7,9 +7,11 @@ import { loadThemeConfig } from "../config/load";
 import { publishedMoments, publishedPosts } from "../lib/content/queries";
 import { excerpt } from "../lib/reading";
 import { previewText } from "../lib/preview-text.mjs";
+import { resolveTimeZone } from "../lib/date-format.mjs";
 import { buildSiteJsonLd } from "../lib/agent/jsonld.mjs";
 
 const config = loadThemeConfig();
+const timeZone = resolveTimeZone(config);
 const posts = publishedPosts();
 const moments = config.home.showShuoshuo ? publishedMoments().slice(0, 3) : [];
 const pageSize = config.home.pageSize;
@@ -19,7 +21,7 @@ const jsonLd = buildSiteJsonLd(config);
 ---
 <Base home description={config.site.description} jsonLd={jsonLd}>
   {moments.map((item) => (
-    <ShuoshuoCard item={item} language={config.site.language} fold={config.motion.foldLongShuoshuo} variant="preview">
+    <ShuoshuoCard item={item} language={config.site.language} timeZone={timeZone} fold={config.motion.foldLongShuoshuo} variant="preview">
       <Fragment set:html={item.html} />
     </ShuoshuoCard>
   ))}

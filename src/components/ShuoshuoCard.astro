@@ -1,24 +1,26 @@
 ---
 import type { ShuoshuoEntry } from "../lib/content/queries";
 import { entryUrl } from "../lib/content/urls.mjs";
+import { dateParts } from "../lib/date-format.mjs";
 import { t } from "../lib/i18n";
 
 interface Props {
   item: ShuoshuoEntry;
   language: string;
+  timeZone?: string;
   fold: boolean;
   variant?: "preview" | "full";
 }
 
-const { item, language, fold, variant = "preview" } = Astro.props;
+const { item, language, timeZone = "", fold, variant = "preview" } = Astro.props;
 const isZh = language.toLowerCase().startsWith("zh");
 const href = entryUrl(item);
-const date = item.data.date;
-const month = date.getMonth() + 1;
-const day = String(date.getDate()).padStart(2, "0");
-const year = date.getFullYear();
-const hm = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-const hms = `${hm}:${String(date.getSeconds()).padStart(2, "0")}`;
+const parts = dateParts(item.data.date, timeZone || (isZh ? "Asia/Shanghai" : "UTC"));
+const month = parts ? parts.monthNum : item.data.date.getUTCMonth() + 1;
+const day = parts ? parts.day : String(item.data.date.getUTCDate()).padStart(2, "0");
+const year = parts ? parts.year : String(item.data.date.getUTCFullYear());
+const hm = parts ? parts.hm : "00:00";
+const hms = parts ? parts.hms : "00:00:00";
 const upvoteId = item.data.wpId ?? item.id;
 ---
 {variant === "full" ? (

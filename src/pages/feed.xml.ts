@@ -9,6 +9,8 @@ export function GET() {
   const config = loadThemeConfig();
   const body = renderFeed({
     title: config.site.title,
+    description: config.site.description,
+    siteUrl: config.site.url,
     items: publishedPosts().map((post) => ({
       title: post.data.title,
       link: entryUrl(post),

@@ -1,4 +1,5 @@
 import { copyTarget } from "../lib/share-copy.mjs";
+import { shareLinks } from "../lib/share.mjs";
 
 async function writeClipboard(text: string): Promise<boolean> {
   if (navigator.clipboard?.writeText) {
@@ -23,7 +24,19 @@ async function writeClipboard(text: string): Promise<boolean> {
 /** Bind Argon share bar reveal, animated WeChat QR popover, and copy-link feedback. */
 export function bindShare(signal?: AbortSignal): void {
   const container = document.getElementById("share_container");
+  const shareBar = document.getElementById("share");
   const toggleBtn = document.getElementById("share_show");
+
+  // Always hydrate share links with the live current page URL so preview/custom domains never fall back to build-time placeholders.
+  if (shareBar) {
+    const liveUrl = copyTarget(location.href);
+    const liveTitle = shareBar.dataset.shareTitle || document.title;
+    for (const item of shareLinks(liveUrl, liveTitle)) {
+      if (item.id === "wechat" || !item.href) continue;
+      const anchor = shareBar.querySelector<HTMLAnchorElement>(`.icon-${item.id}`);
+      if (anchor) anchor.href = item.href;
+    }
+  }
 
   const closeAllQr = () => {
     document.querySelectorAll<HTMLElement>(".argon-wechat-qr.is-open").forEach((popover) => {

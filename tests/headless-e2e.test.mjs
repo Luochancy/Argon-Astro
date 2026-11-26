@@ -56,7 +56,7 @@ const server = createServer((req, res) => {
   };
   if (url.pathname === "/wp-json/argon-astro/v1/config") {
     return json({
-      site: { title: "Headless Argon E2E" },
+      site: { title: "Headless Argon E2E", timezone: "Asia/Shanghai" },
       banner: { backgroundUrl: "--bing--", toolbarMask: true },
       toolbar: {
         iconLink: `${origin}/`,
@@ -178,6 +178,7 @@ const { port } = server.address();
 const wpUrl = `http://127.0.0.1:${port}`;
 const wpEnv = {
   ARGON_SOURCE: "wordpress",
+  SITE_URL: "https://blog.argon-test.example",
   WP_URL: wpUrl,
   WP_USER: "bot",
   WP_APP_PASSWORD: "secret",
@@ -223,9 +224,23 @@ try {
   assert.match(postHtml, /id="blog_tags"/);
   assert.match(postHtml, /WP Widget Link/);
   assert.match(postHtml, /Extra Siteinfo/);
+  assert.match(postHtml, /rel="canonical" href="https:\/\/blog\.argon-test\.example\/archives\/101\.html"/);
+  assert.match(postHtml, /property="og:url" content="https:\/\/blog\.argon-test\.example\/archives\/101\.html"/);
+  assert.match(postHtml, /https%3A%2F%2Fblog\.argon-test\.example%2Farchives%2F101\.html/);
+  assert.equal(postHtml.includes("example.com"), false, "production SITE_URL must replace example.com placeholder");
   assert.equal(postHtml.includes(wpUrl), false);
   assert.equal(existsSync(join(root, "public/media/wp/10-hero.png")), true);
   assert.equal(existsSync(join(root, "dist/archives/101.md")), true);
+
+  // Verify sitemap.xml and feed.xml emit absolute SITE_URL links.
+  const sitemapXml = readFileSync(join(root, "dist/sitemap.xml"), "utf8");
+  assert.match(sitemapXml, /<loc>https:\/\/blog\.argon-test\.example\/archives\/101\.html<\/loc>/);
+  const feedXml = readFileSync(join(root, "dist/feed.xml"), "utf8");
+  assert.match(feedXml, /<link>https:\/\/blog\.argon-test\.example\/archives\/101\.html<\/link>/);
+
+  // Verify shuoshuo date rendered in Asia/Shanghai (+08:00: 01:00Z -> 09:00).
+  const shuoshuoCheck = readFileSync(join(root, "dist/shuoshuo/index.html"), "utf8");
+  assert.match(shuoshuoCheck, /09:00:00/);
 
   // Verify date archive pages (/archives/date/2026/ and /archives/date/2026/11/) were emitted.
   const yearArchive = readFileSync(join(root, "dist/archives/date/2026/index.html"), "utf8");

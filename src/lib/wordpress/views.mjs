@@ -27,7 +27,25 @@ export async function handleViews(request, env, fetchImpl = fetch) {
   const base = env.WP_URL.replace(/\/$/, "") + "/wp-json/argon-astro/v1/views";
 
   if (request.method === "GET") {
-    const id = new URL(request.url).searchParams.get("id");
+    const search = new URL(request.url).searchParams;
+    const idsRaw = search.get("ids");
+    if (idsRaw) {
+      const ids = idsRaw.split(",").map((v) => v.trim()).filter((v) => /^[0-9]+$/.test(v)).slice(0, 50);
+      if (!ids.length) return json(400, { error: "文章编号无效。" });
+      const response = await fetchImpl(base + "?ids=" + ids.join(","), {
+        headers: { authorization: auth, accept: "application/json", "user-agent": WORKER_USER_AGENT },
+      });
+      if (!response.ok) return json(502, { error: "阅读量暂时不可用。" });
+      const data = await response.json();
+      const map = {};
+      if (data && typeof data.views === "object" && data.views !== null) {
+        for (const [k, v] of Object.entries(data.views)) {
+          if (/^[0-9]+$/.test(k)) map[k] = Math.max(0, Number(v || 0));
+        }
+      }
+      return json(200, { views: map });
+    }
+    const id = search.get("id");
     if (!id || !/^[0-9]+$/.test(id)) return json(400, { error: "文章编号无效。" });
     const response = await fetchImpl(base + "?id=" + id, {
       headers: { authorization: auth, accept: "application/json", "user-agent": WORKER_USER_AGENT },

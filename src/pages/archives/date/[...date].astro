@@ -5,16 +5,19 @@ import { loadThemeConfig } from "../../../config/load";
 import { publishedPosts, type PostEntry } from "../../../lib/content/queries";
 import { excerpt } from "../../../lib/reading";
 import { previewText } from "../../../lib/preview-text.mjs";
+import { dateParts, resolveTimeZone } from "../../../lib/date-format.mjs";
 
 export function getStaticPaths() {
+  const config = loadThemeConfig();
+  const timeZone = resolveTimeZone(config);
   const posts = publishedPosts();
   const groups = new Map<string, { label: string; posts: PostEntry[] }>();
 
   for (const post of posts) {
-    const d = post.data.date;
-    if (Number.isNaN(d.getTime())) continue;
-    const year = String(d.getFullYear());
-    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const parts = dateParts(post.data.date, timeZone);
+    if (!parts) continue;
+    const year = parts.year;
+    const month = parts.month;
 
     if (!groups.has(year)) groups.set(year, { label: `${year}`, posts: [] });
     groups.get(year)!.posts.push(post);

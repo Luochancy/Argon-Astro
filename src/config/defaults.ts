@@ -8,6 +8,7 @@ export const defaultConfig: ThemeConfig = {
     description: "A light, simple Astro port of the Argon theme.",
     url: "http://localhost:4321",
     language: "zh-CN",
+    timezone: "",
     keywords: "",
     icon: "",
     dateFormat: "YMD",

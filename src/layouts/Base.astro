@@ -23,12 +23,21 @@ interface Props {
   home?: boolean;
   catalog?: boolean;
   markdownUrl?: string;
+  canonicalPath?: string;
+  ogType?: string;
   jsonLd?: Record<string, unknown>;
 }
 
-const { title, description, image, home = false, catalog = false, markdownUrl, jsonLd } = Astro.props;
+const { title, description, image, home = false, catalog = false, markdownUrl, canonicalPath, ogType = "website", jsonLd } = Astro.props;
 const config = loadThemeConfig();
 const clientConfig = toClientConfig(config);
+const siteBase = String(config.site.url || "").trim().replace(/\/+$/, "");
+const rawPath = canonicalPath || Astro.url.pathname || "/";
+const normalizedPath = /\.html?\/$/i.test(rawPath) ? rawPath.replace(/\/+$/, "") : rawPath;
+const canonicalUrl = /^https?:\/\//i.test(siteBase) ? siteBase + (normalizedPath.startsWith("/") ? normalizedPath : "/" + normalizedPath) : "";
+const ogImageUrl = image
+  ? (/^https?:\/\//i.test(image) ? image : (canonicalUrl ? siteBase + (image.startsWith("/") ? image : "/" + image) : image))
+  : "";
 const pageTitle = title
   ? title + " - " + config.site.title
   : (home && config.site.description ? config.site.title + " - " + config.site.description : config.site.title);
@@ -62,10 +71,13 @@ const toolbarMaskCss = config.banner.toolbarMask
     <title>{pageTitle}</title>
     <meta name="description" content={pageDescription} />
     {config.site.keywords && <meta name="keywords" content={config.site.keywords} />}
+    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+    <meta property="og:type" content={ogType} />
     <meta property="og:site_name" content={config.site.title} />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={pageDescription} />
-    {image && <meta property="og:image" content={image} />}
+    {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+    {ogImageUrl && <meta property="og:image" content={ogImageUrl} />}
     <meta name="theme-color" content={config.appearance.color} />
     {faviconUrl ? (
       <>
