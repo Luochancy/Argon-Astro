@@ -1,7 +1,13 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { convertBufferToWebp, isConvertibleRaster, toWebpPath } from "../src/lib/media/webp.mjs";
+import {
+  inspectCachedWebpSet,
+  isConvertibleRaster,
+  parseResponsiveWidths,
+  toWebpPath,
+  writeResponsiveWebpSet,
+} from "../src/lib/media/webp.mjs";
 import { snapshotFailed, writeSnapshot } from "../src/lib/wordpress/snapshot.mjs";
 import { syncDecision } from "../src/lib/wordpress/sync-decision.mjs";
 
@@ -26,7 +32,8 @@ const wpOrigin = new URL(url).origin;
 const syncUserAgent = "Argon-Astro-Sync/1.0";
 const webpEnabled = process.env.ARGON_IMAGE_WEBP !== "false";
 const webpQuality = Number(process.env.ARGON_IMAGE_WEBP_QUALITY || 82);
-const webpStats = { converted: 0, beforeBytes: 0, afterBytes: 0 };
+const responsiveWidths = parseResponsiveWidths(process.env.ARGON_IMAGE_WIDTHS);
+const webpStats = { converted: 0, variants: 0, beforeBytes: 0, afterBytes: 0 };
 
 const client = {
   origin: wpOrigin,
@@ -60,7 +67,14 @@ const client = {
     const localBase = options.local || "";
     const webpLocal = wantWebp && localBase ? toWebpPath(localBase) : localBase;
 
-    if (wantWebp && existsSync(webpTarget)) return webpLocal;
+    if (wantWebp && existsSync(webpTarget)) {
+      const cached = await inspectCachedWebpSet(webpTarget, webpLocal, responsiveWidths, { quality: webpQuality });
+      if (cached) {
+        if (cached.generated > 0) webpStats.variants += cached.generated;
+        return cached;
+      }
+      return webpLocal;
+    }
     if (!wantWebp && existsSync(target)) return localBase;
 
     const headers = { "user-agent": syncUserAgent };
@@ -81,14 +95,21 @@ const client = {
     const rawBuffer = Buffer.from(await response.arrayBuffer());
 
     if (wantWebp) {
-      const webpBuffer = await convertBufferToWebp(rawBuffer, { quality: webpQuality });
-      if (webpBuffer && webpBuffer.length > 0) {
-        mkdirSync(dirname(webpTarget), { recursive: true });
-        writeFileSync(webpTarget, webpBuffer);
+      const set = await writeResponsiveWebpSet(rawBuffer, webpTarget, webpLocal, {
+        quality: webpQuality,
+        widths: responsiveWidths,
+      });
+      if (set) {
         webpStats.converted += 1;
+        webpStats.variants += set.variants.length;
         webpStats.beforeBytes += rawBuffer.length;
-        webpStats.afterBytes += webpBuffer.length;
-        return webpLocal;
+        webpStats.afterBytes += set.masterBytes;
+        return {
+          local: set.local,
+          width: set.width,
+          height: set.height,
+          variants: set.variants,
+        };
       }
     }
 
@@ -100,12 +121,15 @@ const client = {
 try {
   const result = await writeSnapshot(client, root);
   console.log("snapshot", result);
-  if (webpStats.converted > 0) {
+  if (webpStats.converted > 0 || webpStats.variants > 0) {
     const savedPct = webpStats.beforeBytes > 0
       ? Math.round((1 - webpStats.afterBytes / webpStats.beforeBytes) * 100)
       : 0;
+    const sizeNote = webpStats.beforeBytes > 0
+      ? ` (${(webpStats.beforeBytes / 1024).toFixed(1)} KB -> ${(webpStats.afterBytes / 1024).toFixed(1)} KB master, ${savedPct >= 0 ? "-" + savedPct : "+" + Math.abs(savedPct)}%)`
+      : " (backfilled from cached masters)";
     console.log(
-      `webp: converted ${webpStats.converted} images (${(webpStats.beforeBytes / 1024).toFixed(1)} KB -> ${(webpStats.afterBytes / 1024).toFixed(1)} KB, ${savedPct >= 0 ? "-" + savedPct : "+" + Math.abs(savedPct)}%)`,
+      `webp: converted ${webpStats.converted} images + ${webpStats.variants} responsive variants${sizeNote}`,
     );
   }
 } catch (error) {

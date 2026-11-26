@@ -1,15 +1,22 @@
 ---
 import type { ThemeConfig } from "../config/types";
-import type { PostEntry } from "../lib/content/queries";
+import { loadMediaVariants, type PostEntry } from "../lib/content/queries";
 import { excerpt } from "../lib/reading";
 import { entryUrl } from "../lib/content/urls.mjs";
+import { resolveResponsiveImage } from "../lib/media/responsive.mjs";
 import { firstImage } from "../lib/thumbnail.mjs";
 import PostMeta from "./PostMeta.astro";
 
 interface Props { post: PostEntry; config: ThemeConfig; summary: string }
 const { post, config, summary } = Astro.props;
 const href = entryUrl(post);
-const cover = post.data.cover || (config.article.firstImageAsThumbnail ? firstImage(post.html) : "");
+const coverRaw = post.data.cover || (config.article.firstImageAsThumbnail ? firstImage(post.html) : "");
+const coverImg = coverRaw
+  ? resolveResponsiveImage(coverRaw, loadMediaVariants(), { preferredWidth: 960, sizes: "(max-width: 600px) 100vw, 760px" })
+  : null;
+const cover = coverImg?.src || "";
+const coverSrcset = coverImg?.srcset || undefined;
+const coverSizes = coverImg?.sizes || undefined;
 const layout = config.article.listLayout;
 const summaryText = summary || excerpt(post.data.description ?? "", config.article.trimWords);
 const articleClasses = [
@@ -24,7 +31,7 @@ const articleClasses = [
 {layout === "2" ? (
   <article class:list={articleClasses} id={"post-" + post.id}>
     <header class:list={["post-header", { "post-header-with-thumbnail": Boolean(cover) }]}>
-      {cover && <img class="post-thumbnail" src={cover} alt="" />}
+      {cover && <img class="post-thumbnail" src={cover} srcset={coverSrcset} sizes={coverSizes} alt="" loading="lazy" decoding="async" />}
     </header>
     <div class="post-content-container">
       <a class="post-title" href={href}>{post.data.title}</a>
@@ -44,7 +51,7 @@ const articleClasses = [
   <article class:list={articleClasses} id={"post-" + post.id}>
     {cover && (
       <header class="post-header post-header-with-thumbnail">
-        <img class="post-thumbnail" src={cover} alt="" />
+        <img class="post-thumbnail" src={cover} srcset={coverSrcset} sizes={coverSizes} alt="" loading="lazy" decoding="async" />
       </header>
     )}
     <header class="post-header">
@@ -64,7 +71,7 @@ const articleClasses = [
 ) : (
   <article class:list={articleClasses} id={"post-" + post.id}>
     <header class:list={["post-header text-center", { "post-header-with-thumbnail": Boolean(cover) }]}>
-      {cover && <img class="post-thumbnail" src={cover} alt="" />}
+      {cover && <img class="post-thumbnail" src={cover} srcset={coverSrcset} sizes={coverSizes} alt="" loading="lazy" decoding="async" />}
       {cover ? (
         <div class="post-header-text-container">
           <a class="post-title" href={href}>{post.data.title}</a>

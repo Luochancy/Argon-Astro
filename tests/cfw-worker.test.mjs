@@ -286,6 +286,16 @@ assert.equal((await viewsPost.json()).views, 43);
 const ghBad = await worker.fetch(new Request("https://blog.example/api/github?author=../bad&project=repo"), {});
 assert.equal(ghBad.status, 400);
 
+// Malformed JSON POST bodies must return clean JSON 400 (never unhandled 500)
+const fakeWpEnv = { WP_URL: "https://cms.secret", WP_USER: "bot", WP_APP_PASSWORD: "pw" };
+for (const apiPath of ["/api/comments", "/api/comment-upvote", "/api/shuoshuo-upvote", "/api/post-unlock", "/api/views"]) {
+  const badJson = await worker.fetch(
+    new Request("https://blog.example" + apiPath, { method: "POST", body: "{not-json" }),
+    fakeWpEnv,
+  );
+  assert.equal(badJson.status, 400, `${apiPath} malformed JSON must return 400`);
+}
+
 for (const feedPath of ["/feed", "/feed/", "/rss", "/rss/"]) {
   const feedRes = await worker.fetch(new Request("https://blog.example" + feedPath), { ASSETS: mockAssets });
   assert.equal(feedRes.status, 200, `${feedPath} should serve /feed.xml`);

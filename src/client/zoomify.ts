@@ -80,6 +80,19 @@ export function bindZoomify(
     image.style.transition = `transform ${time}ms ${curve}`;
     document.body.classList.add("noscroll");
 
+    // Upgrade to full-resolution master WebP only when zoomed in.
+    const fullSrc = (image.dataset.fullSrc || "").trim();
+    if (fullSrc && image.dataset.fullLoaded !== "true" && (image.currentSrc || image.src) !== fullSrc) {
+      const hiRes = new Image();
+      hiRes.decoding = "async";
+      hiRes.onload = () => {
+        image.removeAttribute("srcset");
+        image.src = fullSrc;
+        image.dataset.fullLoaded = "true";
+      };
+      hiRes.src = fullSrc;
+    }
+
     window.requestAnimationFrame(() => {
       backdrop.classList.add("zoomed");
       image.style.transform = `translate(${dx}px, ${dy}px) scale(${fitScale})`;

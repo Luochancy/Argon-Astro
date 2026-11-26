@@ -12,13 +12,13 @@ pnpm build
 
 - 静态资源（`/_astro/*`、`/argon/*`、`/media/*` 等）由 Static Assets 直接分发；
 - 页面路由支持 `Accept: text/markdown` 内容协商（普通浏览器返回 HTML，AI 智能体协商返回预构建 Markdown）；
-- `/api/comments`、`/api/comment-upvote`、`/api/shuoshuo-upvote`、`/api/deploy` 由 Worker 处理。
+- `/api/comments`、`/api/comment-upvote`、`/api/shuoshuo-upvote`、`/api/post-unlock`、`/api/views`、`/api/github`、`/api/bing`、`/api/deploy` 由 Worker 处理。
 
 在 Cloudflare Dashboard → **Workers & Pages → Create Worker → Connect to Git** 配置：
 
 - **Build command**：`pnpm build`
 - **Deploy command**：`npx wrangler deploy`
-- **Build variables**：`ARGON_SOURCE=wordpress`、`WP_URL`、`WP_USER`、`WP_APP_PASSWORD`
+- **Build variables**：`ARGON_SOURCE=wordpress`、`WP_URL`、`WP_USER`、`WP_APP_PASSWORD`、`SITE_URL`
 - **Runtime Secrets**：`WP_URL`、`WP_USER`、`WP_APP_PASSWORD`、`ARGON_CAPTCHA_SECRET`、`ARGON_DEPLOY_SECRET`
 
 在 Worker 的 **Builds → Deploy Hooks** 创建部署钩子，填入 WordPress 后台 **Argon → 无头桥接与部署 → CI / 构建部署钩子 → Cloudflare (Workers / Pages)** 即可自动触发重建。
@@ -51,9 +51,13 @@ pnpm build
 | 变量 | 用途 |
 | --- | --- |
 | `ARGON_SOURCE` | `local` 或 `wordpress`，优先级高于 `argon.config.yml` |
+| `SITE_URL` | 对外公开访问地址（例如 `https://blog.example.com`），用于 Canonical、Sitemap、RSS、JSON-LD 与分享链接 |
 | `WP_URL` | WordPress 站点根地址（例如 `https://cms.example.com`） |
 | `WP_USER` | 具备 `edit_posts` 权限的 WordPress 用户名 |
 | `WP_APP_PASSWORD` | WordPress 应用程序密码 |
+| `ARGON_IMAGE_WEBP` | 默认开启；设为 `false` 可关闭构建期自动 WebP 与多尺寸响应式图生成 |
+| `ARGON_IMAGE_WEBP_QUALITY` | 可选，响应式 WebP 压缩质量（默认 `82`） |
+| `ARGON_IMAGE_WIDTHS` | 可选，逗号分隔的响应式宽度列表（默认 `480,960,1440`；放大灯箱时按需加载原尺寸高清晰度 WebP） |
 | `ARGON_CAPTCHA_SECRET` | 评论算术验证码 HMAC 签名密钥 |
 | `ARGON_DEPLOY_SECRET` | 自定义 `/api/deploy` Webhook HMAC-SHA256 验签密钥 |
 | `ARGON_ROBOTS_TXT` | 可选，Serverless 运行时注入/覆写 `/robots.txt` 内容 |

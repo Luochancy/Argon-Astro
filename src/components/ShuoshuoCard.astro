@@ -1,7 +1,8 @@
 ---
-import type { ShuoshuoEntry } from "../lib/content/queries";
+import { loadMediaVariants, type ShuoshuoEntry } from "../lib/content/queries";
 import { entryUrl } from "../lib/content/urls.mjs";
 import { dateParts } from "../lib/date-format.mjs";
+import { resolveResponsiveImage } from "../lib/media/responsive.mjs";
 import { t } from "../lib/i18n";
 
 interface Props {
@@ -15,6 +16,8 @@ interface Props {
 const { item, language, timeZone = "", fold, variant = "preview" } = Astro.props;
 const isZh = language.toLowerCase().startsWith("zh");
 const href = entryUrl(item);
+const mediaVariants = loadMediaVariants();
+const galleryImages = item.data.images.map((src) => resolveResponsiveImage(src, mediaVariants, { preferredWidth: 960 }));
 const parts = dateParts(item.data.date, timeZone || (isZh ? "Asia/Shanghai" : "UTC"));
 const month = parts ? parts.monthNum : item.data.date.getUTCMonth() + 1;
 const day = parts ? parts.day : String(item.data.date.getUTCDate()).padStart(2, "0");
@@ -54,9 +57,19 @@ const upvoteId = item.data.wpId ?? item.id;
     <article class:list={["card shuoshuo-main bg-white shadow-sm border-0", { "shuoshuo-foldable": fold }]} id={"moment-" + item.id}>
       {item.data.title && <a class="shuoshuo-title" href={href}>{item.data.title}</a>}
       <div class="shuoshuo-content"><slot /></div>
-      {item.data.images.length > 0 && (
+      {galleryImages.length > 0 && (
         <div class="shuoshuo-images">
-          {item.data.images.map((src) => <img src={src} alt="" loading="lazy" />)}
+          {galleryImages.map((img) => (
+            <img
+              src={img.src}
+              srcset={img.srcset || undefined}
+              sizes={img.sizes || undefined}
+              data-full-src={img.fullSrc !== img.src ? img.fullSrc : undefined}
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+          ))}
         </div>
       )}
       <div class="shuoshuo-operations">
@@ -82,9 +95,19 @@ const upvoteId = item.data.wpId ?? item.id;
   <div class:list={["shuoshuo-preview-container card bg-white shadow-sm border-0", { "shuoshuo-foldable": fold }]} id={"moment-" + item.id}>
     {item.data.title && <a class="shuoshuo-title" href={href}>{item.data.title}</a>}
     <div class="shuoshuo-content"><slot /></div>
-    {item.data.images.length > 0 && (
+    {galleryImages.length > 0 && (
       <div class="shuoshuo-images">
-        {item.data.images.map((src) => <img src={src} alt="" loading="lazy" />)}
+        {galleryImages.map((img) => (
+          <img
+            src={img.src}
+            srcset={img.srcset || undefined}
+            sizes={img.sizes || undefined}
+            data-full-src={img.fullSrc !== img.src ? img.fullSrc : undefined}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        ))}
       </div>
     )}
     <div class="shuoshuo-preview-meta">

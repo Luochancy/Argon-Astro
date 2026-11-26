@@ -7,6 +7,7 @@ import { handleCommentUpvote } from "../../src/lib/comments/upvote.mjs";
 import { handleUpvote } from "../../src/lib/shuoshuo/upvote.mjs";
 import { handlePostUnlock } from "../../src/lib/wordpress/post-unlock.mjs";
 import { handleViews } from "../../src/lib/wordpress/views.mjs";
+import { handleGithubRepo, handleBingWallpaper } from "../../src/lib/edge/public-proxies.mjs";
 import { handleDeployHook } from "../../src/lib/ci/receiver.mjs";
 import {
   acceptsMarkdown,
@@ -21,104 +22,19 @@ import {
 import { resolveTaxonomyAliasPath } from "../../src/lib/content/taxonomies.mjs";
 
 const seenNonces = new Set();
+const MAX_SEEN_NONCES = 1000;
 let cachedTaxonomyMap = null;
+
+function pruneNonces() {
+  while (seenNonces.size > MAX_SEEN_NONCES) {
+    const oldest = seenNonces.values().next().value;
+    if (oldest === undefined) break;
+    seenNonces.delete(oldest);
+  }
+}
 
 function normalizeApiPath(pathname) {
   return pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
-}
-
-async function handleGithubRepo(request, url) {
-  if (request.method !== "GET") {
-    return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
-      status: 405,
-      headers: { "content-type": "application/json; charset=utf-8" },
-    });
-  }
-  const author = String(url.searchParams.get("author") || "").trim();
-  const project = String(url.searchParams.get("project") || "").trim();
-  if (!/^[a-zA-Z0-9._-]+$/.test(author) || !/^[a-zA-Z0-9._-]+$/.test(project)) {
-    return new Response(JSON.stringify({ error: "Invalid repository" }), {
-      status: 400,
-      headers: { "content-type": "application/json; charset=utf-8" },
-    });
-  }
-  try {
-    const res = await fetch(`https://api.github.com/repos/${author}/${project}`, {
-      headers: {
-        accept: "application/vnd.github+json",
-        "user-agent": "Argon-Astro-Worker/1.0",
-      },
-      cf: { cacheTtl: 21600, cacheEverything: true },
-    });
-    if (!res.ok) {
-      return new Response(JSON.stringify({ error: "GitHub API unavailable" }), {
-        status: 502,
-        headers: { "content-type": "application/json; charset=utf-8" },
-      });
-    }
-    const data = await res.json();
-    return new Response(
-      JSON.stringify({
-        description: String(data?.description || ""),
-        stars: Number(data?.stargazers_count ?? 0),
-        forks: Number(data?.forks_count ?? 0),
-      }),
-      {
-        status: 200,
-        headers: {
-          "content-type": "application/json; charset=utf-8",
-          "cache-control": "public, max-age=3600, s-maxage=21600",
-        },
-      },
-    );
-  } catch {
-    return new Response(JSON.stringify({ error: "GitHub API unavailable" }), {
-      status: 502,
-      headers: { "content-type": "application/json; charset=utf-8" },
-    });
-  }
-}
-
-async function handleBingWallpaper(request) {
-  const method = request.method.toUpperCase();
-  if (method !== "GET" && method !== "HEAD") {
-    return new Response("Method Not Allowed", { status: 405 });
-  }
-  try {
-    const apiRes = await fetch("https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1", {
-      headers: { accept: "application/json", "user-agent": "Argon-Astro-Worker/1.0" },
-      cf: { cacheTtl: 21600, cacheEverything: true },
-    });
-    if (apiRes.ok) {
-      const data = await apiRes.json();
-      const rel = data && Array.isArray(data.images) && data.images[0] ? data.images[0].url : "";
-      if (typeof rel === "string" && rel.startsWith("/")) {
-        const target = "https://www.bing.com" + rel;
-        const imgRes = await fetch(target, {
-          headers: { "user-agent": "Argon-Astro-Worker/1.0" },
-          cf: { cacheTtl: 21600, cacheEverything: true },
-        });
-        if (imgRes.ok) {
-          const headers = new Headers(imgRes.headers);
-          headers.set("cache-control", "public, max-age=3600, s-maxage=21600");
-          return new Response(method === "HEAD" ? null : imgRes.body, {
-            status: 200,
-            headers,
-          });
-        }
-        return new Response(null, {
-          status: 302,
-          headers: {
-            location: target,
-            "cache-control": "public, max-age=3600",
-          },
-        });
-      }
-    }
-  } catch {
-    // Fall through to 502 so CSS gradient placeholder stays visible.
-  }
-  return new Response("Bing wallpaper unavailable.", { status: 502 });
 }
 
 async function loadTaxonomyMap(url, env) {
@@ -213,9 +129,10 @@ export default {
       return handleViews(request, env);
     }
     if (path === "/api/github") {
-      return handleGithubRepo(request, url);
+      return handleGithubRepo(request);
     }
     if (path === "/api/deploy") {
+      pruneNonces();
       return handleDeployHook(request, env, seenNonces);
     }
     if (path === "/api/bing") {

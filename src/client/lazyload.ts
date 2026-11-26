@@ -30,6 +30,9 @@ export function bindLazyload(
     if (source) {
       image.addEventListener("load", finish, { once: true, signal });
       image.addEventListener("error", finish, { once: true, signal });
+      if (image.dataset.srcset) {
+        image.srcset = image.dataset.srcset;
+      }
       image.src = source;
       if (image.complete && image.naturalWidth > 0) finish();
     } else {

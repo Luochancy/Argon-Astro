@@ -30,8 +30,9 @@ pnpm check:no-cms  # 检查静态产物不含 CMS 直连
 | Build command | `pnpm build` |
 | Deploy command | `npx wrangler deploy` |
 
-- **Build variables**：`ARGON_SOURCE=wordpress`、`WP_URL`、`WP_USER`、`WP_APP_PASSWORD`
+- **Build variables**：`ARGON_SOURCE=wordpress`、`WP_URL`、`WP_USER`、`WP_APP_PASSWORD`、`SITE_URL`（可选：`ARGON_IMAGE_WEBP`、`ARGON_IMAGE_WEBP_QUALITY`、`ARGON_IMAGE_WIDTHS`）
 - **Runtime Secrets**：`WP_URL`、`WP_USER`、`WP_APP_PASSWORD`、`ARGON_CAPTCHA_SECRET`（可选：`ARGON_DEPLOY_SECRET`、`ARGON_ROBOTS_TXT`、`ARGON_LLMS_TXT`、`ARGON_LLMS_FULL_TXT`）
+- **构建期响应式 WebP**：默认自动将同步的 WordPress 图片转为多尺寸 WebP（`480w / 960w / 1440w`），日常浏览按设备加载合适尺寸，点击灯箱放大时再无感加载最高清晰度原尺寸 WebP。
 - **自动重建**：在 Worker 的 **Builds → Deploy Hooks** 创建钩子 URL，填入 WordPress 后台 **Argon → 无头桥接与部署 → CI / 构建部署钩子 → Cloudflare (Workers / Pages)**。
 
 ## 评论系统

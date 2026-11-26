@@ -1,7 +1,7 @@
 // Build content entries from local src/content/ or headless .cache/content/
 // into src/generated/entries.json and src/generated/unknown-blocks.json.
 import { createRequire } from "node:module";
-import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createContext, renderDocument } from "../src/lib/blocks/index.mjs";
@@ -162,4 +162,9 @@ for (const entry of published) {
 
 writeFileSync(join(outDir, "unknown-blocks.json"), JSON.stringify(baseCtx.unknown, null, 2));
 writeFileSync(join(outDir, "entries.json"), JSON.stringify(published, null, 2));
+const cachedVariantsPath = join(root, ".cache/content/media-variants.json");
+const mediaVariants = source === "wordpress" && existsSync(cachedVariantsPath)
+  ? readFileSync(cachedVariantsPath, "utf8")
+  : "{}";
+writeFileSync(join(outDir, "media-variants.json"), mediaVariants);
 console.log("content entries", published.length, "(source=" + source + ")");

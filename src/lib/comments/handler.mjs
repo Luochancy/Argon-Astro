@@ -85,7 +85,13 @@ export async function handleComments(request, env, fetchImpl = fetch) {
     })));
   }
   if (request.method !== "POST") return json(405, { error: "方法不被允许。" });
-  const body = await request.json();
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json(400, { error: "请求格式无效。" });
+  }
+  if (!body || typeof body !== "object") return json(400, { error: "请求格式无效。" });
   if (body.action === "edit") return editComment(body, env, fetchImpl);
   if (body.action === "pin") return pinComment(body, env, fetchImpl);
   const content = String(body.content || "").trim();

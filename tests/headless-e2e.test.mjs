@@ -8,12 +8,13 @@ import { existsSync, readFileSync, rmSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
+import sharp from "sharp";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const TINY_PNG = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
-  "base64"
-);
+// Real 1600x900 PNG so sync-wordpress generates full-res master WebP + 480w/960w/1440w responsive variants.
+const HERO_PNG = await sharp({
+  create: { width: 1600, height: 900, channels: 3, background: { r: 94, g: 114, b: 228 } },
+}).png().toBuffer();
 
 function runNode(args, env) {
   return new Promise((resolve, reject) => {
@@ -42,7 +43,7 @@ const server = createServer((req, res) => {
   const origin = `http://${req.headers.host}`;
   if (url.pathname === "/wp-content/uploads/2026/11/hero.png") {
     res.writeHead(200, { "content-type": "image/png" });
-    res.end(TINY_PNG);
+    res.end(HERO_PNG);
     return;
   }
   if (!req.headers.authorization?.startsWith("Basic ")) {
@@ -234,10 +235,16 @@ try {
   assert.equal(postHtml.includes("example.com"), false, "production SITE_URL must replace example.com placeholder");
   assert.equal(postHtml.includes(wpUrl), false);
   const webpFile = join(root, "public/media/wp/10-hero.webp");
-  assert.equal(existsSync(webpFile), true, "mirrored PNG must auto-convert to .webp during build");
+  assert.equal(existsSync(webpFile), true, "mirrored PNG must auto-convert to master .webp during build");
   const webpBytes = readFileSync(webpFile);
   assert.equal(webpBytes.subarray(0, 4).toString("ascii"), "RIFF");
   assert.equal(webpBytes.subarray(8, 12).toString("ascii"), "WEBP");
+  for (const w of [480, 960, 1440]) {
+    assert.equal(existsSync(join(root, `public/media/wp/10-hero-w${w}.webp`)), true, `responsive variant w${w} must exist`);
+  }
+  assert.match(postHtml, /src="\/media\/wp\/10-hero-w960\.webp"/, "inline article image should use right-sized display variant");
+  assert.match(postHtml, /srcset="\/media\/wp\/10-hero-w480\.webp 480w, \/media\/wp\/10-hero-w960\.webp 960w, \/media\/wp\/10-hero-w1440\.webp 1440w"/);
+  assert.match(postHtml, /data-full-src="\/media\/wp\/10-hero\.webp"/, "full-res master WebP must be reserved for zoom/lightbox");
   assert.equal(existsSync(join(root, "dist/archives/101.md")), true);
 
   // Verify sitemap.xml and feed.xml emit absolute SITE_URL links.
@@ -272,10 +279,11 @@ try {
   const secretHtml = readFileSync(join(root, "dist/posts/secret-post/index.html"), "utf8");
   assert.equal(secretHtml.includes("TOP_SECRET_SHOULD_NOT_LEAK"), false);
 
-  // Verify headless shuoshuo page built cleanly with rewritten WebP image.
+  // Verify headless shuoshuo page built cleanly with responsive WebP image + full-res zoom attribute.
   const shuoshuoHtml = readFileSync(join(root, "dist/shuoshuo/index.html"), "utf8");
   assert.match(shuoshuoHtml, /Headless shuoshuo entry/);
-  assert.match(shuoshuoHtml, /\/media\/wp\/10-hero\.webp/);
+  assert.match(shuoshuoHtml, /src="\/media\/wp\/10-hero-w960\.webp"/);
+  assert.match(shuoshuoHtml, /data-full-src="\/media\/wp\/10-hero\.webp"/);
 
   console.log("headless e2e ok");
 } finally {

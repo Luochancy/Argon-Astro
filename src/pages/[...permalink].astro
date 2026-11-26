@@ -6,6 +6,7 @@ import PostMeta from "../components/PostMeta.astro";
 import ShuoshuoCard from "../components/ShuoshuoCard.astro";
 import { loadThemeConfig } from "../config/load";
 import {
+  loadMediaVariants,
   publishedMoments,
   publishedPages,
   publishedPosts,
@@ -13,6 +14,7 @@ import {
   type ContentEntry,
 } from "../lib/content/queries";
 import { entryRouteParam, entryUrl } from "../lib/content/urls.mjs";
+import { resolveResponsiveImage } from "../lib/media/responsive.mjs";
 import { buildArticleJsonLd, buildShuoshuoJsonLd } from "../lib/agent/jsonld.mjs";
 import { entryMarkdownPath } from "../lib/agent/markdown-export.mjs";
 import { dateParts, formatDate, resolveTimeZone } from "../lib/date-format.mjs";
@@ -87,6 +89,13 @@ const modifyDeltaDays = Math.max(0, Math.floor((Date.now() - (entry.data.modifie
 const outdatedDeltaDays = outdatedUseModified ? modifyDeltaDays : postDeltaDays;
 const bannerThumb = entry.kind === "post" ? bannerThumbnailCss(config.article.thumbnailInBanner, entry.data.cover) : "";
 const hasHeaderThumb = entry.kind === "post" && Boolean(entry.data.cover) && !config.article.thumbnailInBanner;
+const mediaVariants = loadMediaVariants();
+const headerThumbImg = hasHeaderThumb
+  ? resolveResponsiveImage(entry.data.cover, mediaVariants, { preferredWidth: 1440, sizes: "(max-width: 600px) 100vw, 960px" })
+  : null;
+const momentGalleryImages = entry.kind === "shuoshuo"
+  ? entry.data.images.map((src) => resolveResponsiveImage(src, mediaVariants, { preferredWidth: 960 }))
+  : [];
 const afterPostRendered = entry.kind === "post"
   ? renderAfterPost(config.article.afterPostHtml, {
       url: absUrl,
@@ -138,7 +147,16 @@ const jsonLd = entry.kind === "post"
     {bannerThumb && <style set:html={bannerThumb}></style>}
     <article class="post post-full card bg-white shadow-sm border-0" id={"post-" + entry.id} data-wp-id={entry.data.wpId}>
       <header class:list={["post-header text-center", { "post-header-with-thumbnail": hasHeaderThumb }]}>
-        {hasHeaderThumb && <img class="post-thumbnail" src={entry.data.cover} alt="" />}
+        {hasHeaderThumb && headerThumbImg && (
+          <img
+            class="post-thumbnail"
+            src={headerThumbImg.src}
+            srcset={headerThumbImg.srcset || undefined}
+            sizes={headerThumbImg.sizes || undefined}
+            alt=""
+            decoding="async"
+          />
+        )}
         {hasHeaderThumb ? (
           <div class="post-header-text-container">
             <a class="post-title" href={canonicalPath}>{entry.data.title}</a>
@@ -196,14 +214,27 @@ const jsonLd = entry.kind === "post"
         </h2>
         <div style="overflow-x:auto;padding:0.8rem 1.5rem;">
           {related.map((item) => {
-            const itemCover = item.data.cover || (config.article.firstImageAsThumbnail ? firstImage(item.html) : "");
+            const itemCoverRaw = item.data.cover || (config.article.firstImageAsThumbnail ? firstImage(item.html) : "");
+            const itemCoverImg = itemCoverRaw
+              ? resolveResponsiveImage(itemCoverRaw, mediaVariants, { preferredWidth: 480, sizes: "280px" })
+              : null;
             return (
               <a class="related-post-card" href={entryUrl(item)}>
-                <div class:list={["related-post-card-container", { "has-thumbnail": Boolean(itemCover) }]}>
+                <div class:list={["related-post-card-container", { "has-thumbnail": Boolean(itemCoverImg) }]}>
                   <div class="related-post-title clamp" clamp-line="3">{item.data.title}</div>
                   <i class="fa fa-chevron-right related-post-arrow" aria-hidden="true"></i>
                 </div>
-                {itemCover && <img class="related-post-thumbnail" src={itemCover} alt="" loading="lazy" />}
+                {itemCoverImg && (
+                  <img
+                    class="related-post-thumbnail"
+                    src={itemCoverImg.src}
+                    srcset={itemCoverImg.srcset || undefined}
+                    sizes={itemCoverImg.sizes || undefined}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                  />
+                )}
               </a>
             );
           })}
@@ -243,9 +274,19 @@ const jsonLd = entry.kind === "post"
       <article class="card shuoshuo-main bg-white shadow-sm border-0" id={"moment-" + entry.id}>
         {entry.data.title && <a class="shuoshuo-title" href={canonicalPath}>{entry.data.title}</a>}
         <div class="shuoshuo-content" id="post_content" set:html={entry.html}></div>
-        {entry.data.images.length > 0 && (
+        {momentGalleryImages.length > 0 && (
           <div class="shuoshuo-images">
-            {entry.data.images.map((src) => <img src={src} alt="" loading="lazy" />)}
+            {momentGalleryImages.map((img) => (
+              <img
+                src={img.src}
+                srcset={img.srcset || undefined}
+                sizes={img.sizes || undefined}
+                data-full-src={img.fullSrc !== img.src ? img.fullSrc : undefined}
+                alt=""
+                loading="lazy"
+                decoding="async"
+              />
+            ))}
           </div>
         )}
         <div class="shuoshuo-operations">

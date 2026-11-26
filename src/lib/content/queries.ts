@@ -1,4 +1,22 @@
 import rawEntries from "../../generated/entries.json";
+import rawMediaVariants from "../../generated/media-variants.json";
+
+export interface MediaVariantItem {
+  width: number;
+  local: string;
+}
+
+export interface MediaVariantRecord {
+  width: number;
+  height: number;
+  variants: MediaVariantItem[];
+}
+
+export type MediaVariantMap = Record<string, MediaVariantRecord>;
+
+export function loadMediaVariants(): MediaVariantMap {
+  return (rawMediaVariants && typeof rawMediaVariants === "object" ? rawMediaVariants : {}) as MediaVariantMap;
+}
 
 export interface EntryData {
   title: string;

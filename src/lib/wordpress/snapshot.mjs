@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { createContext, renderDocument } from "../blocks/index.mjs";
 import { normalizeEntryPermalink, relativizeSameOriginUrl } from "../content/urls.mjs";
 import { renderPasswordForm } from "../crypto-post.mjs";
+import { enhanceResponsiveImages } from "../media/responsive.mjs";
 import { applyReferences } from "../references.mjs";
 
 function yamlValue(value) {
@@ -183,12 +184,25 @@ export async function writeSnapshot(client, root) {
     }
   }
 
+  const variantMap = {};
   if (client.download && downloads.length > 0) {
     const concurrency = Number(client.concurrency) > 0 ? Number(client.concurrency) : 6;
     await runWithConcurrency(downloads, concurrency, async ({ url, local, target, keepOriginal }) => {
       const resolved = await client.download(url, target, { local, keepOriginal });
       if (typeof resolved === "string" && resolved.startsWith("/")) {
         map.set(url, resolved);
+      } else if (resolved && typeof resolved === "object" && typeof resolved.local === "string" && resolved.local.startsWith("/")) {
+        map.set(url, resolved.local);
+        if (Array.isArray(resolved.variants) && resolved.variants.length > 0) {
+          variantMap[resolved.local] = {
+            width: Number(resolved.width || 0),
+            height: Number(resolved.height || 0),
+            variants: resolved.variants.map((v) => ({
+              width: Number(v.width || 0),
+              local: String(v.local || ""),
+            })).filter((v) => v.width > 0 && v.local.startsWith("/")),
+          };
+        }
       }
     });
   }
@@ -313,7 +327,7 @@ export async function writeSnapshot(client, root) {
       const html = locked
         ? renderPasswordForm({ id: String(item.id || item.slug || "post"), hint: item.passwordHint || "", payload: null, mode: "wordpress" })
         : renderDocument(referenced.html, ctx) + referenced.list;
-      const rewritten = rewriteOriginHrefs(rewriteMediaUrls(html, map));
+      const rewritten = enhanceResponsiveImages(rewriteOriginHrefs(rewriteMediaUrls(html, map)), variantMap);
       const permalink = normalizeEntryPermalink(item.permalink);
       const matter = {
         title: item.title,
@@ -355,6 +369,7 @@ export async function writeSnapshot(client, root) {
     tags: ctx.tags,
   }, null, 2));
   writeFileSync(join(root, ".cache", "content", "media-manifest.json"), JSON.stringify([...map.entries()], null, 2));
+  writeFileSync(join(root, ".cache", "content", "media-variants.json"), JSON.stringify(variantMap, null, 2));
   writeFileSync(marker, JSON.stringify({ writtenAt: new Date().toISOString(), posts: posts.length, pages: pages.length, shuoshuo: moments.length, media: downloads.length }));
   return { posts: posts.length, pages: pages.length, shuoshuo: moments.length, media: downloads.length };
 }

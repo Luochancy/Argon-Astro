@@ -5,11 +5,11 @@ function captionFor(image: HTMLImageElement): string {
   return caption ? caption.trim() : "";
 }
 
-/** Bind animated article image lightbox with darkmode overlay suppression and keyboard navigation. */
+/** Bind animated article & shuoshuo image lightbox that upgrades to full-resolution WebP only on zoom. */
 export function bindLightbox(signal?: AbortSignal): void {
   const images = [
     ...document.querySelectorAll<HTMLImageElement>(
-      "#post_content img, .wp-block-image img, .wp-block-gallery img",
+      "#post_content img, .wp-block-image img, .wp-block-gallery img, .shuoshuo-images img",
     ),
   ];
   if (images.length === 0) return;
@@ -36,15 +36,30 @@ export function bindLightbox(signal?: AbortSignal): void {
   const nextBtn = dialog.querySelector<HTMLButtonElement>(".argon-lightbox-next");
 
   let activeIndex = 0;
+  let loadToken = 0;
 
   const isOpen = () => dialog!.classList.contains("is-open");
 
   const show = (index: number) => {
     activeIndex = (index + images.length) % images.length;
     const current = images[activeIndex];
+    const token = ++loadToken;
     if (targetImg) {
-      targetImg.src = current.currentSrc || current.src;
+      const previewSrc = current.currentSrc || current.src;
+      const fullSrc = (current.dataset.fullSrc || "").trim();
+      targetImg.src = previewSrc;
       targetImg.alt = current.alt;
+      // Upgrade seamlessly to full-resolution master WebP only when the image is opened/zoomed.
+      if (fullSrc && fullSrc !== previewSrc) {
+        const hiRes = new Image();
+        hiRes.decoding = "async";
+        hiRes.onload = () => {
+          if (loadToken === token && isOpen() && targetImg) {
+            targetImg.src = fullSrc;
+          }
+        };
+        hiRes.src = fullSrc;
+      }
     }
     if (captionEl) {
       const text = captionFor(current);
